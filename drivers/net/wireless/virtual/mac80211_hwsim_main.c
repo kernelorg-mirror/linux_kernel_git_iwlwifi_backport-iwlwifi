@@ -190,7 +190,7 @@ static const struct ieee80211_regdomain hwsim_world_regdom_custom_03 = {
 		REG_RULE(5150 - 10, 5240 + 10, 40, 0, 30, 0),
 		REG_RULE(5745 - 10, 5825 + 10, 40, 0, 30, 0),
 		REG_RULE(5855 - 10, 5925 + 10, 40, 0, 33, 0),
-		REG_RULE(5955 - 10, 7125 + 10, 320, 0, 33, 0),
+		REG_RULE(5955 - 10, 7225 + 10, 320, 0, 33, 0),
 	}
 };
 
@@ -489,6 +489,11 @@ static const struct ieee80211_channel hwsim_channels_6ghz[] = {
 	CHAN6G(7075), /* Channel 225 */
 	CHAN6G(7095), /* Channel 229 */
 	CHAN6G(7115), /* Channel 233 */
+	CHAN6G(7135), /* Channel 237 */
+	CHAN6G(7155), /* Channel 241 */
+	CHAN6G(7175), /* Channel 245 */
+	CHAN6G(7195), /* Channel 249 */
+	CHAN6G(7215), /* Channel 253 */
 };
 static_assert(HWSIM_NUM_CHANNELS_6GHZ == ARRAY_SIZE(hwsim_channels_6ghz),
 	      "Inconsistent 6 GHz channel count");
