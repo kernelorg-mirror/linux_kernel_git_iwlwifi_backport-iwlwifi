@@ -2,7 +2,7 @@
 /*
  * KUnit tests for channel helper functions
  *
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  */
 #include <kunit/test.h>
 #include <net/mac80211.h>
@@ -43,7 +43,7 @@ static struct iwl_cfg_trans_params trans_cfg = {
 static struct iwl_trans trans = {
 	.trans_cfg = &trans_cfg,
 	/* RFI feature is enabled only for MA family */
-	.hw_rev = IWL_CFG_MAC_TYPE_MA << 4,
+	.info.hw_rev = IWL_CFG_MAC_TYPE_MA << 4,
 };
 
 static struct iwl_mvm mvm = {
