@@ -36,12 +36,12 @@ static struct iwl_fw fw = {
 	}
 };
 
-static struct iwl_cfg_trans_params trans_cfg = {
+static struct iwl_mac_cfg mac_cfg = {
 	.integrated = true
 };
 
 static struct iwl_trans trans = {
-	.trans_cfg = &trans_cfg,
+	.mac_cfg = &mac_cfg,
 	/* RFI feature is enabled only for MA family */
 	.info.hw_rev = IWL_CFG_MAC_TYPE_MA << 4,
 };
