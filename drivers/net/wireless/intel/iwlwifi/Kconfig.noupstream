@@ -3,6 +3,7 @@ config IWLXVT
 	depends on IWLWIFI
 	select IWLWIFI_DEVICE_TESTMODE
 	select IWLWIFI_SUPPORT_DEBUG_OVERRIDES
+	select IWLWIFI_OPMODE_MODULAR
 	help
 	  This option enables the xVT operation mode. xVT mode supports
 	  special debug and testing operations that are not supported in
