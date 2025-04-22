@@ -486,6 +486,7 @@
 #define   PCI_EXP_TYPE_RC_EC	   0xa	/* Root Complex Event Collector */
 #define  PCI_EXP_FLAGS_SLOT	0x0100	/* Slot implemented */
 #define  PCI_EXP_FLAGS_IRQ	0x3e00	/* Interrupt message number */
+#define  PCI_EXP_FLAGS_FLIT	0x8000	/* Flit Mode Supported */
 #define PCI_EXP_DEVCAP		0x04	/* Device capabilities */
 #define  PCI_EXP_DEVCAP_PAYLOAD	0x00000007 /* Max_Payload_Size */
 #define  PCI_EXP_DEVCAP_PHANTOM	0x00000018 /* Phantom functions */
@@ -797,6 +798,8 @@
 #define  PCI_ERR_CAP_ECRC_CHKC		0x00000080 /* ECRC Check Capable */
 #define  PCI_ERR_CAP_ECRC_CHKE		0x00000100 /* ECRC Check Enable */
 #define  PCI_ERR_CAP_PREFIX_LOG_PRESENT	0x00000800 /* TLP Prefix Log Present */
+#define  PCI_ERR_CAP_TLP_LOG_FLIT	0x00040000 /* TLP was logged in Flit Mode */
+#define  PCI_ERR_CAP_TLP_LOG_SIZE	0x00f80000 /* Logged TLP Size (only in Flit mode) */
 #define PCI_ERR_HEADER_LOG	0x1c	/* Header Log Register (16 bytes) */
 #define PCI_ERR_ROOT_COMMAND	0x2c	/* Root Error Command */
 #define  PCI_ERR_ROOT_CMD_COR_EN	0x00000001 /* Correctable Err Reporting Enable */
@@ -1015,7 +1018,7 @@
 
 /* Resizable BARs */
 #define PCI_REBAR_CAP		4	/* capability register */
-#define  PCI_REBAR_CAP_SIZES		0x00FFFFF0  /* supported BAR sizes */
+#define  PCI_REBAR_CAP_SIZES		0xFFFFFFF0  /* supported BAR sizes */
 #define PCI_REBAR_CTRL		8	/* control register */
 #define  PCI_REBAR_CTRL_BAR_IDX		0x00000007  /* BAR index */
 #define  PCI_REBAR_CTRL_NBAR_MASK	0x000000E0  /* # of resizable BARs */
@@ -1063,8 +1066,9 @@
 #define  PCI_EXP_DPC_CAP_RP_EXT		0x0020	/* Root Port Extensions */
 #define  PCI_EXP_DPC_CAP_POISONED_TLP	0x0040	/* Poisoned TLP Egress Blocking Supported */
 #define  PCI_EXP_DPC_CAP_SW_TRIGGER	0x0080	/* Software Triggering Supported */
-#define  PCI_EXP_DPC_RP_PIO_LOG_SIZE	0x0F00	/* RP PIO Log Size */
+#define  PCI_EXP_DPC_RP_PIO_LOG_SIZE	0x0F00	/* RP PIO Log Size [3:0] */
 #define  PCI_EXP_DPC_CAP_DL_ACTIVE	0x1000	/* ERR_COR signal on DL_Active supported */
+#define  PCI_EXP_DPC_RP_PIO_LOG_SIZE4	0x2000	/* RP PIO Log Size [4] */
 
 #define PCI_EXP_DPC_CTL			0x06	/* DPC control */
 #define  PCI_EXP_DPC_CTL_EN_FATAL	0x0001	/* Enable trigger on ERR_FATAL message */
@@ -1207,61 +1211,12 @@
 #define PCI_DOE_DATA_OBJECT_DISC_REQ_3_INDEX		0x000000ff
 #define PCI_DOE_DATA_OBJECT_DISC_REQ_3_VER		0x0000ff00
 #define PCI_DOE_DATA_OBJECT_DISC_RSP_3_VID		0x0000ffff
-#define PCI_DOE_DATA_OBJECT_DISC_RSP_3_PROTOCOL		0x00ff0000
+#define PCI_DOE_DATA_OBJECT_DISC_RSP_3_TYPE		0x00ff0000
 #define PCI_DOE_DATA_OBJECT_DISC_RSP_3_NEXT_INDEX	0xff000000
 
-/* Integrity and Data Encryption */
-#define PCI_IDE_CAP		0x04
-#define  PCI_IDE_CAP_LNK	0x00000001	/* Link IDE Stream Supported */
-#define  PCI_IDE_CAP_SEL	0x00000002	/* Selective IDE Stream Supported */
-#define  PCI_IDE_CAP_KM		0x00000040	/* KM in responder role */
-#define  PCI_IDE_CAP_CONF_REQ	0x00000080	/* Selective IDE Configuration Requests Supported */
-#define  PCI_IDE_CAP_LNK_NUM	0x0000E000	/* Number of TCs Supported for Link IDE */
-#define  PCI_IDE_CAP_SEL_NUM	0x00FF0000	/* Number of Selective IDE Streams Supported */
-#define PCI_IDE_CTRL		0x08
-/* IDE Link IDE Register Block */
-#define PCI_IDE_LNK_CTRL	0x00
-#define  PCI_IDE_LNK_CTRL_ENABLE	0x00000001	/* Link IDE Stream Enable */
-#define  PCI_IDE_LNK_CTRL_NPR_AGG	0x0000000C	/* Tx Aggregation Mode NPR */
-#define  PCI_IDE_LNK_CTRL_PR_AGG	0x00000030	/* Tx Aggregation Mode PR */
-#define  PCI_IDE_LNK_CTRL_CPL_AGG	0x000000C0	/* Tx Aggregation Mode CPL */
-#define  PCI_IDE_LNK_CTRL_PCRC		0x00000100	/* PCRC Enable */
-#define  PCI_IDE_LNK_CTRL_ALGO		0x0007C000	/* Selected Algorithm */
-#define  PCI_IDE_LNK_CTRL_TC		0x00380000	/* TC */
-#define  PCI_IDE_LNK_CTRL_STREAM_ID	0xFF000000	/* Stream ID */
-#define PCI_IDE_LNK_STATUS	0x04
-/* IDE Selective IDE Register Block */
-#define PCI_IDE_SEL_CAP		0x00
-#define  PCI_IDE_SEL_CAP_NUM_ASSOC_BLK	0x0000000F	/* Address Association Register Blocks */
-#define PCI_IDE_SEL_CTRL	0x04
-#define  PCI_IDE_SEL_CTRL_ENABLE	0x00000001	/* Selective IDE Stream Enable */
-#define  PCI_IDE_SEL_CTRL_NPR_AGG	0x0000000C	/* Tx Aggregation Mode NPR */
-#define  PCI_IDE_SEL_CTRL_PR_AGG	0x00000030	/* Tx Aggregation Mode PR */
-#define  PCI_IDE_SEL_CTRL_CPL_AGG	0x000000C0	/* Tx Aggregation Mode CPL */
-#define  PCI_IDE_SEL_CTRL_PCRC		0x00000100	/* PCRC Enable */
-#define  PCI_IDE_SEL_CTRL_CONF_REQ	0x00000200	/* Configuration Requests Enable */
-#define  PCI_IDE_SEL_CTRL_PHE		0x00003C00	/* Partial Header Encryption Mode */
-#define  PCI_IDE_SEL_CTRL_ALGO		0x0007C000	/* Selected Algorithm */
-#define  PCI_IDE_SEL_CTRL_TC		0x00380000	/* TC */
-#define  PCI_IDE_SEL_CTRL_DEFAULT	0x00400000	/* Default Stream */
-#define  PCI_IDE_SEL_CTRL_STREAM_ID	0xFF000000	/* Stream ID */
-#define PCI_IDE_SEL_STATUS	0x08
-#define  PCI_IDE_SEL_CHECK_FAIL_MSG	0x80000000	/* Received Integrity Check Fail Message */
-#define  PCI_IDE_SEL_STREAM_STATE	0x0000000F	/* Selective IDE Stream State */
-#define PCI_IDE_RID_ASSOC1	0x0c
-#define  PCI_IDE_RID_ASSOC1_LIMIT	0x00FFFF00	/* RID Limit */
-#define PCI_IDE_RID_ASSOC2	0x10
-#define  PCI_IDE_RID_ASSOC2_VALID	0x00000001	/* Valid */
-#define  PCI_IDE_RID_ASSOC2_BASE	0x00FFFF00	/* RID Base */
-/* IDE Address Association Register Block */
-#define PCI_IDE_ADDR_ASSOC1	0x00
-#define  PCI_IDE_ADDR_ASSOC1_VALID		0x00000001	/* Valid */
-#define  PCI_IDE_ADDR_ASSOC1_MEM_BASE_LOWER	0x000FFF00	/* Memory Base Lower */
-#define  PCI_IDE_ADDR_ASSOC1_MEM_LIMIT_LOWER	0xFFF00000	/* Memory Limit Lower */
-#define PCI_IDE_ADDR_ASSOC2	0x04
-#define  PCI_IDE_ADDR_ASSOC2_MEM_LIMIT_UPPER	0xFFFFFFFF	/* Memory Limit Upper */
-#define PCI_IDE_ADDR_ASSOC3	0x08
-#define  PCI_IDE_ADDR_ASSOC3_MEM_BASE_UPPER	0xFFFFFFFF	/* Memory Base Upper */
+/* Deprecated old name, replaced with PCI_DOE_DATA_OBJECT_DISC_RSP_3_TYPE */
+#define PCI_DOE_DATA_OBJECT_DISC_RSP_3_PROTOCOL		PCI_DOE_DATA_OBJECT_DISC_RSP_3_TYPE
+
 /* Compute Express Link (CXL r3.1, sec 8.1.5) */
 #define PCI_DVSEC_CXL_PORT				3
 #define PCI_DVSEC_CXL_PORT_CTL				0x0c

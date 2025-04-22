@@ -162,7 +162,9 @@ int cfg80211_switch_netns(struct cfg80211_registered_device *rdev,
 	list_for_each_entry(wdev, &rdev->wiphy.wdev_list, list) {
 		if (!wdev->netdev)
 			continue;
-#if LINUX_VERSION_IS_GEQ(6,12,0)
+#if LINUX_VERSION_IS_GEQ(6,15,0)
+		wdev->netdev->netns_immutable = false;
+#elif LINUX_VERSION_IS_GEQ(6,12,0)
 		wdev->netdev->netns_local = false;
 #else
 		wdev->netdev->features &= ~NETIF_F_NETNS_LOCAL;
@@ -170,7 +172,9 @@ int cfg80211_switch_netns(struct cfg80211_registered_device *rdev,
 		err = dev_change_net_namespace(wdev->netdev, net, "wlan%d");
 		if (err)
 			break;
-#if LINUX_VERSION_IS_GEQ(6,12,0)
+#if LINUX_VERSION_IS_GEQ(6,15,0)
+		wdev->netdev->netns_immutable = true;
+#elif LINUX_VERSION_IS_GEQ(6,12,0)
 		wdev->netdev->netns_local = true;
 #else
 		wdev->netdev->features |= NETIF_F_NETNS_LOCAL;
@@ -186,7 +190,9 @@ int cfg80211_switch_netns(struct cfg80211_registered_device *rdev,
 						     list) {
 			if (!wdev->netdev)
 				continue;
-#if LINUX_VERSION_IS_GEQ(6,12,0)
+#if LINUX_VERSION_IS_GEQ(6,15,0)
+			wdev->netdev->netns_immutable = false;
+#elif LINUX_VERSION_IS_GEQ(6,12,0)
 			wdev->netdev->netns_local = false;
 #else
 			wdev->netdev->features &= ~NETIF_F_NETNS_LOCAL;
@@ -194,7 +200,9 @@ int cfg80211_switch_netns(struct cfg80211_registered_device *rdev,
 			err = dev_change_net_namespace(wdev->netdev, net,
 							"wlan%d");
 			WARN_ON(err);
-#if LINUX_VERSION_IS_GEQ(6,12,0)
+#if LINUX_VERSION_IS_GEQ(6,15,0)
+			wdev->netdev->netns_immutable = true;
+#elif LINUX_VERSION_IS_GEQ(6,12,0)
 			wdev->netdev->netns_local = true;
 #else
 			wdev->netdev->features |= NETIF_F_NETNS_LOCAL;
@@ -569,6 +577,9 @@ use_default_name:
 	INIT_WORK(&rdev->mgmt_registrations_update_wk,
 		  cfg80211_mgmt_registrations_update_wk);
 	spin_lock_init(&rdev->mgmt_registrations_lock);
+	INIT_WORK(&rdev->wiphy_work, cfg80211_wiphy_work);
+	INIT_LIST_HEAD(&rdev->wiphy_work_list);
+	spin_lock_init(&rdev->wiphy_work_lock);
 
 #ifdef CPTCFG_CFG80211_DEFAULT_PS
 	rdev->wiphy.flags |= WIPHY_FLAG_PS_ON_BY_DEFAULT;
@@ -586,9 +597,6 @@ use_default_name:
 		return NULL;
 	}
 
-	INIT_WORK(&rdev->wiphy_work, cfg80211_wiphy_work);
-	INIT_LIST_HEAD(&rdev->wiphy_work_list);
-	spin_lock_init(&rdev->wiphy_work_lock);
 	INIT_WORK(&rdev->rfkill_block, cfg80211_rfkill_block_work);
 	INIT_WORK(&rdev->conn_work, cfg80211_conn_work);
 	INIT_WORK(&rdev->event_work, cfg80211_event_work);
@@ -1548,10 +1556,12 @@ static int cfg80211_netdev_notifier_call(struct notifier_block *nb,
 		SET_NETDEV_DEVTYPE(dev, &wiphy_type);
 		wdev->netdev = dev;
 		/* can only change netns with wiphy */
-#if LINUX_VERSION_IS_GEQ(6,12,0)
+#if LINUX_VERSION_IS_GEQ(6,15,0)
+		dev->netns_immutable = true;
+#elif LINUX_VERSION_IS_GEQ(6,12,0)
 		dev->netns_local = true;
 #else
-		wdev->netdev->features |= NETIF_F_NETNS_LOCAL;
+		dev->features |= NETIF_F_NETNS_LOCAL;
 #endif
 
 		cfg80211_init_wdev(wdev);
@@ -1753,7 +1763,7 @@ void wiphy_delayed_work_queue(struct wiphy *wiphy,
 	trace_wiphy_delayed_work_queue(wiphy, &dwork->work, delay);
 
 	if (!delay) {
-		del_timer(&dwork->timer);
+		timer_delete(&dwork->timer);
 		wiphy_work_queue(wiphy, &dwork->work);
 		return;
 	}
@@ -1768,7 +1778,7 @@ void wiphy_delayed_work_cancel(struct wiphy *wiphy,
 {
 	lockdep_assert_held(&wiphy->mtx);
 
-	del_timer_sync(&dwork->timer);
+	timer_delete_sync(&dwork->timer);
 	wiphy_work_cancel(wiphy, &dwork->work);
 }
 EXPORT_SYMBOL_GPL(wiphy_delayed_work_cancel);
@@ -1778,7 +1788,7 @@ void wiphy_delayed_work_flush(struct wiphy *wiphy,
 {
 	lockdep_assert_held(&wiphy->mtx);
 
-	del_timer_sync(&dwork->timer);
+	timer_delete_sync(&dwork->timer);
 	wiphy_work_flush(wiphy, &dwork->work);
 }
 EXPORT_SYMBOL_GPL(wiphy_delayed_work_flush);

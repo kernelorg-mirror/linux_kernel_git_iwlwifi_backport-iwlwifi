@@ -56,6 +56,9 @@ static inline int __printf(2, 3) debugfs_change_name(struct dentry *dentry, cons
 	struct dentry *parent;
 	va_list ap;
 
+	if (IS_ERR_OR_NULL(dentry))
+		return -EINVAL;
+
 	va_start(ap, fmt);
 	new_name = kvasprintf_const(GFP_KERNEL, fmt, ap);
 	va_end(ap);
