@@ -96,6 +96,7 @@ config IWLWIFI_OPMODE_MODULAR
 	default y if IWLMVM=m
 	default y if IWLXVT=m
 	default y if IWLMLD=m
+	default y if IWLWIFI_KUNIT_TESTS=m
 
 comment "WARNING: iwlwifi is useless without IWLDVM or IWLMVM or IWLMLD"
 	depends on IWLDVM=n && IWLMVM=n && IWLMLD=n
