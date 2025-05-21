@@ -303,7 +303,9 @@ static void test_iwl_mld_link_pair_allows_emlsr(struct kunit *test)
 	};
 	u32 result;
 
+#ifdef CPTCFG_IWLWIFI_SUPPORT_DEBUG_OVERRIDES
 	mld->trans->dbg_cfg.MLD_ENTER_EMLSR_CHAN_LOAD = -1;
+#endif
 
 	vif = iwlmld_kunit_setup_mlo_assoc(BIT(a.link_id) | BIT(b.link_id),
 					   &assoc_link);
