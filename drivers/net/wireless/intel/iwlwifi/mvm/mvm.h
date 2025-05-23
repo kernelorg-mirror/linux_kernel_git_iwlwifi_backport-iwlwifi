@@ -2166,11 +2166,6 @@ struct iwl_mvm_link_sel_data {
 };
 
 #if IS_ENABLED(CPTCFG_IWLWIFI_KUNIT_TESTS)
-unsigned int iwl_mvm_get_link_grade(struct ieee80211_bss_conf *link_conf);
-bool iwl_mvm_mld_valid_link_pair(struct ieee80211_vif *vif,
-				 const struct iwl_mvm_link_sel_data *a,
-				 const struct iwl_mvm_link_sel_data *b);
-
 extern const struct iwl_hcmd_arr iwl_mvm_groups[];
 extern const unsigned int iwl_mvm_groups_size;
 #endif
