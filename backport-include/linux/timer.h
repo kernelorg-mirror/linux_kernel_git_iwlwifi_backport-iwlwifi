@@ -98,4 +98,8 @@ static inline int timer_delete(struct timer_list *timer)
 }
 #endif
 
+#ifndef timer_container_of
+#define timer_container_of from_timer
+#endif
+
 #endif /* _BACKPORT_TIMER_H */
