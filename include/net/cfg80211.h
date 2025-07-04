@@ -3793,73 +3793,6 @@ enum cfg80211_nan_conf_changes {
 };
 
 /**
- * struct cfg80211_nan_func_filter - a NAN function Rx / Tx filter
- *
- * @filter: the content of the filter
- * @len: the length of the filter
- */
-struct cfg80211_nan_func_filter {
-	const u8 *filter;
-	u8 len;
-};
-
-/**
- * struct cfg80211_nan_func - a NAN function
- *
- * @type: &enum nl80211_nan_function_type
- * @service_id: the service ID of the function
- * @publish_type: &nl80211_nan_publish_type
- * @close_range: if true, the range should be limited. Threshold is
- *	implementation specific.
- * @publish_bcast: if true, the solicited publish should be broadcasted
- * @subscribe_active: if true, the subscribe is active
- * @followup_id: the instance ID for follow up
- * @followup_reqid: the requester instance ID for follow up
- * @followup_dest: MAC address of the recipient of the follow up
- * @ttl: time to live counter in DW.
- * @serv_spec_info: Service Specific Info
- * @serv_spec_info_len: Service Specific Info length
- * @srf_include: if true, SRF is inclusive
- * @srf_bf: Bloom Filter
- * @srf_bf_len: Bloom Filter length
- * @srf_bf_idx: Bloom Filter index
- * @srf_macs: SRF MAC addresses
- * @srf_num_macs: number of MAC addresses in SRF
- * @rx_filters: rx filters that are matched with corresponding peer's tx_filter
- * @tx_filters: filters that should be transmitted in the SDF.
- * @num_rx_filters: length of &rx_filters.
- * @num_tx_filters: length of &tx_filters.
- * @instance_id: driver allocated id of the function.
- * @cookie: unique NAN function identifier.
- */
-struct cfg80211_nan_func {
-	enum nl80211_nan_function_type type;
-	u8 service_id[NL80211_NAN_FUNC_SERVICE_ID_LEN];
-	u8 publish_type;
-	bool close_range;
-	bool publish_bcast;
-	bool subscribe_active;
-	u8 followup_id;
-	u8 followup_reqid;
-	struct mac_address followup_dest;
-	u32 ttl;
-	const u8 *serv_spec_info;
-	u8 serv_spec_info_len;
-	bool srf_include;
-	const u8 *srf_bf;
-	u8 srf_bf_len;
-	u8 srf_bf_idx;
-	struct mac_address *srf_macs;
-	int srf_num_macs;
-	struct cfg80211_nan_func_filter *rx_filters;
-	struct cfg80211_nan_func_filter *tx_filters;
-	u8 num_tx_filters;
-	u8 num_rx_filters;
-	u8 instance_id;
-	u64 cookie;
-};
-
-/**
  * struct cfg80211_pmk_conf - PMK configuration
  *
  * @aa: authenticator address
@@ -4535,14 +4468,6 @@ struct mgmt_frame_regs {
  *	peers must be on the base channel when the call completes.
  * @start_nan: Start the NAN interface.
  * @stop_nan: Stop the NAN interface.
- * @add_nan_func: Add a NAN function. Returns negative value on failure.
- *	On success @nan_func ownership is transferred to the driver and
- *	it may access it outside of the scope of this function. The driver
- *	should free the @nan_func when no longer needed by calling
- *	cfg80211_free_nan_func().
- *	On success the driver should assign an instance_id in the
- *	provided @nan_func.
- * @del_nan_func: Delete a NAN function.
  * @nan_change_conf: changes NAN configuration. The changed parameters must
  *	be specified in @changes (using &enum cfg80211_nan_conf_changes);
  *	All other parameters must be ignored.
@@ -4911,10 +4836,6 @@ struct cfg80211_ops {
 	int	(*start_nan)(struct wiphy *wiphy, struct wireless_dev *wdev,
 			     struct cfg80211_nan_conf *conf);
 	void	(*stop_nan)(struct wiphy *wiphy, struct wireless_dev *wdev);
-	int	(*add_nan_func)(struct wiphy *wiphy, struct wireless_dev *wdev,
-				struct cfg80211_nan_func *nan_func);
-	void	(*del_nan_func)(struct wiphy *wiphy, struct wireless_dev *wdev,
-			       u64 cookie);
 	int	(*nan_change_conf)(struct wiphy *wiphy,
 				   struct wireless_dev *wdev,
 				   struct cfg80211_nan_conf *conf,
@@ -9450,67 +9371,6 @@ wiphy_ext_feature_isset(struct wiphy *wiphy,
 	ft_byte = wiphy->ext_features[ftidx / 8];
 	return (ft_byte & BIT(ftidx % 8)) != 0;
 }
-
-/**
- * cfg80211_free_nan_func - free NAN function
- * @f: NAN function that should be freed
- *
- * Frees all the NAN function and all it's allocated members.
- */
-void cfg80211_free_nan_func(struct cfg80211_nan_func *f);
-
-/**
- * struct cfg80211_nan_match_params - NAN match parameters
- * @type: the type of the function that triggered a match. If it is
- *	 %NL80211_NAN_FUNC_SUBSCRIBE it means that we replied to a subscriber.
- *	 If it is %NL80211_NAN_FUNC_PUBLISH, it means that we got a discovery
- *	 result.
- *	 If it is %NL80211_NAN_FUNC_FOLLOW_UP, we received a follow up.
- * @inst_id: the local instance id
- * @peer_inst_id: the instance id of the peer's function
- * @addr: the MAC address of the peer
- * @info_len: the length of the &info
- * @info: the Service Specific Info from the peer (if any)
- * @cookie: unique identifier of the corresponding function
- */
-struct cfg80211_nan_match_params {
-	enum nl80211_nan_function_type type;
-	u8 inst_id;
-	u8 peer_inst_id;
-	const u8 *addr;
-	u8 info_len;
-	const u8 *info;
-	u64 cookie;
-};
-
-/**
- * cfg80211_nan_match - report a match for a NAN function.
- * @wdev: the wireless device reporting the match
- * @match: match notification parameters
- * @gfp: allocation flags
- *
- * This function reports that the a NAN function had a match. This
- * can be a subscribe that had a match or a solicited publish that
- * was sent. It can also be a follow up that was received.
- */
-void cfg80211_nan_match(struct wireless_dev *wdev,
-			struct cfg80211_nan_match_params *match, gfp_t gfp);
-
-/**
- * cfg80211_nan_func_terminated - notify about NAN function termination.
- *
- * @wdev: the wireless device reporting the match
- * @inst_id: the local instance id
- * @reason: termination reason (one of the NL80211_NAN_FUNC_TERM_REASON_*)
- * @cookie: unique NAN function identifier
- * @gfp: allocation flags
- *
- * This function reports that the a NAN function is terminated.
- */
-void cfg80211_nan_func_terminated(struct wireless_dev *wdev,
-				  u8 inst_id,
-				  enum nl80211_nan_func_term_reason reason,
-				  u64 cookie, gfp_t gfp);
 
 /* ethtool helper */
 void cfg80211_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info);

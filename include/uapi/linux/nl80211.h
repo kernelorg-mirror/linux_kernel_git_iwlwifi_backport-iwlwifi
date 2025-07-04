@@ -1103,10 +1103,12 @@
  *	returns, so userspace shouldn't process NAN events until it processes
  *	the response to this command.
  *	Look at %NL80211_ATTR_SOCKET_OWNER as well.
+ *	This command is now deprecated.
  * @NL80211_CMD_DEL_NAN_FUNCTION: Delete a NAN function by cookie.
  *	This command is also used as a notification sent when a NAN function is
  *	terminated. This will contain a %NL80211_ATTR_NAN_FUNC_INST_ID
  *	and %NL80211_ATTR_COOKIE attributes.
+ *	This command is now deprecated.
  * @NL80211_CMD_CHANGE_NAN_CONFIG: Change current NAN
  *	configuration. NAN must be operational (%NL80211_CMD_START_NAN
  *	was executed).  It must contain at least one of the following
@@ -1118,6 +1120,7 @@
  * @NL80211_CMD_NAN_MATCH: Notification sent when a match is reported.
  *	This will contain a %NL80211_ATTR_NAN_MATCH nested attribute and
  *	%NL80211_ATTR_COOKIE.
+ *	This attribute is now deprecated.
  *
  * @NL80211_CMD_UPDATE_CONNECT_PARAMS: Update one or more connect parameters
  *	for subsequent roaming cases if the driver or firmware uses internal
