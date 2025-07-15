@@ -4190,6 +4190,7 @@ int iwl_pci_gen1_2_probe(struct pci_dev *pdev,
 	const struct iwl_dev_info *dev_info;
 	struct iwl_trans_info info = {
 		.hw_id = (pdev->device << 16) + pdev->subsystem_device,
+		.dma_protection = pdev->untrusted,
 	};
 	struct iwl_trans *iwl_trans;
 	struct iwl_trans_pcie *trans_pcie;
