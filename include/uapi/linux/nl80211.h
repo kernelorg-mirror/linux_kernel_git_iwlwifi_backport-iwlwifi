@@ -1618,9 +1618,6 @@ enum nl80211_commands {
 
 	NL80211_CMD_SET_TID_TO_LINK_MAPPING,
 
-	/* let this always be before all commands we haven't upstreamed yet */
-	__NL80211_CMD_NONUPSTREAM_START,
-
 	NL80211_CMD_ASSOC_MLO_RECONF,
 	NL80211_CMD_EPCS_CFG,
 

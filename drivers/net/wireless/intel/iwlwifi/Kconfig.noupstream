@@ -62,12 +62,6 @@ config IWLWIFI_DISALLOW_OLDER_FW
 	  to ensure tight coupling between driver and firmware releases. When
 	  enabled, the dbg-cfg framework can still override this setting.
 
-config REJECT_NONUPSTREAM_NL80211
-	bool "reject non-upstreamed nl80211 commands"
-	depends on CFG80211
-	help
-	  Say Y to disable non-upstream commands.
-
 config IWLWIFI_DONT_DUMP_FIFOS
 	bool "do not dump FIFO contents"
 	help

@@ -17707,11 +17707,6 @@ static int nl80211_pre_doit(
 
 	internal_flags = nl80211_internal_flags[ops->internal_flags];
 
-#ifdef CPTCFG_REJECT_NONUPSTREAM_NL80211
-	if (info->genlhdr->cmd >= __NL80211_CMD_NONUPSTREAM_START)
-		return -EOPNOTSUPP;
-#endif
-
 	rtnl_lock();
 	if (internal_flags & NL80211_FLAG_NEED_WIPHY) {
 		rdev = cfg80211_get_dev_from_info(genl_info_net(info), info);
