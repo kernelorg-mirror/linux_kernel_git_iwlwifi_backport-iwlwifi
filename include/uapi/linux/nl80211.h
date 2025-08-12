@@ -8304,7 +8304,7 @@ enum nl80211_wiphy_radio_freq_range {
  *	capabilities of the device as defined in Wi-Fi Aware (TM)
  *	specification Table 79 (Capabilities field).
  * @__NL80211_NAN_CAPABILITIES_LAST: Internal
- * @NL80211_NAN_CAPABILITES_MAX: Highest NAN capability attribute.
+ * @NL80211_NAN_CAPABILITIES_MAX: Highest NAN capability attribute.
  */
 enum nl80211_nan_capabilities {
 	__NL80211_NAN_CAPABILITIES_INVALID,
@@ -8317,7 +8317,7 @@ enum nl80211_nan_capabilities {
 	NL80211_NAN_CAPA_CAPABILITIES,
 	/* keep last */
 	__NL80211_NAN_CAPABILITIES_LAST,
-	NL80211_NAN_CAPABILITES_MAX = __NL80211_NAN_CAPABILITIES_LAST - 1,
+	NL80211_NAN_CAPABILITIES_MAX = __NL80211_NAN_CAPABILITIES_LAST - 1,
 };
 
 #endif /* __LINUX_NL80211_H */
