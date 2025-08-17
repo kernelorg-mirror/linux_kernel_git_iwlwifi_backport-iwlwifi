@@ -167,7 +167,7 @@ int genlmsg_multicast(const struct genl_family *family,
 #define genlmsg_multicast_allns LINUX_BACKPORT(genlmsg_multicast_allns)
 int backport_genlmsg_multicast_allns(const struct genl_family *family,
 				     struct sk_buff *skb, u32 portid,
-				     unsigned int group, gfp_t flags);
+				     unsigned int group);
 
 #define genl_family_attrbuf LINUX_BACKPORT(genl_family_attrbuf)
 static inline struct nlattr **genl_family_attrbuf(struct genl_family *family)
@@ -187,23 +187,26 @@ static inline int genlmsg_parse(const struct nlmsghdr *nlh,
 	return __nlmsg_parse(nlh, family->hdrsize + GENL_HDRLEN, tb, maxtype,
 			     policy, NL_VALIDATE_STRICT, extack);
 }
-#endif /* LINUX_VERSION_IS_LESS(5,2,0) */
-
-#if LINUX_VERSION_IS_LESS(6,13,0)
-
-#define genlmsg_multicast_allns LINUX_BACKPORT(genlmsg_multicast_allns)
-static inline int genlmsg_multicast_allns(const struct genl_family *family,
-					  struct sk_buff *skb, u32 portid,
-					  unsigned int group)
+#elif LINUX_VERSION_IS_LESS(6,11,6) &&			\
+	!LINUX_VERSION_IN_RANGE(5,4,285, 5,5,0) &&	\
+	!LINUX_VERSION_IN_RANGE(5,10,229, 5,11,0) &&	\
+	!LINUX_VERSION_IN_RANGE(5,15,170, 5,16,0) &&	\
+	!LINUX_VERSION_IN_RANGE(6,1,115, 6,2,0) &&	\
+	!LINUX_VERSION_IN_RANGE(6,6,59, 6,7,0)
+static inline 
+int backport_genlmsg_multicast_allns(const struct genl_family *family,
+				     struct sk_buff *skb, u32 portid,
+				     unsigned int group)
 {
 	int ret;
 
 	rcu_read_lock();
-	ret = genlmsg_multicast_netns(family, &init_net, skb, portid, group, GFP_ATOMIC);
+	ret = genlmsg_multicast_allns(family, skb, portid, group, GFP_ATOMIC);
 	rcu_read_unlock();
+
 	return ret;
 }
-
-#endif /* LINUX_VERSION_IS_LESS(6,13,0) */
+#define genlmsg_multicast_allns LINUX_BACKPORT(genlmsg_multicast_allns)
+#endif /* LINUX_VERSION_IS_LESS(5,2,0) */
 
 #endif /* __BACKPORT_NET_GENETLINK_H */

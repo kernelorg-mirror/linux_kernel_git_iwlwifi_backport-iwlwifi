@@ -867,7 +867,8 @@ int cfg80211_mlme_mgmt_tx(struct cfg80211_registered_device *rdev,
 
 	mgmt = (const struct ieee80211_mgmt *)params->buf;
 
-	if (!ieee80211_is_mgmt(mgmt->frame_control))
+	if (!ieee80211_is_mgmt(mgmt->frame_control) ||
+	    ieee80211_has_order(mgmt->frame_control))
 		return -EINVAL;
 
 	stype = le16_to_cpu(mgmt->frame_control) & IEEE80211_FCTL_STYPE;
@@ -1348,7 +1349,8 @@ void cfg80211_mlo_reconf_add_done(struct net_device *dev,
 	lockdep_assert_wiphy(wiphy);
 
 	trace_cfg80211_mlo_reconf_add_done(dev, data->added_links,
-					   data->buf, data->len);
+					   data->buf, data->len,
+					   data->driver_initiated);
 
 	if (WARN_ON(!wdev->valid_links))
 		return;
@@ -1378,11 +1380,16 @@ void cfg80211_mlo_reconf_add_done(struct net_device *dev,
 			wdev->links[link_id].client.current_bss =
 				bss_from_pub(bss);
 
+			if (data->driver_initiated)
+				cfg80211_hold_bss(bss_from_pub(bss));
+
 			memcpy(wdev->links[link_id].addr,
 			       data->links[link_id].addr,
 			       ETH_ALEN);
 		} else {
-			cfg80211_unhold_bss(bss_from_pub(bss));
+			if (!data->driver_initiated)
+				cfg80211_unhold_bss(bss_from_pub(bss));
+
 			cfg80211_put_bss(wiphy, bss);
 		}
 	}

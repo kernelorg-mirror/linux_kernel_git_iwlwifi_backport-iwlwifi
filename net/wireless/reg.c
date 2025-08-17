@@ -53,7 +53,11 @@
 #include <linux/list.h>
 #include <linux/ctype.h>
 #include <linux/nl80211.h>
+#if LINUX_VERSION_IS_GEQ(6,14,0)
+#include <linux/device/faux.h>
+#else
 #include <linux/platform_device.h>
+#endif
 #include <linux/verification.h>
 #include <linux/moduleparam.h>
 #include <linux/firmware.h>
@@ -106,7 +110,11 @@ static struct regulatory_request __rcu *last_request =
 	(void __force __rcu *)&core_request_world;
 
 /* To trigger userspace events and load firmware */
-static struct platform_device *reg_pdev;
+#if LINUX_VERSION_IS_GEQ(6,14,0)
+static struct faux_device *reg_fdev;
+#else
+static struct platform_device *reg_fdev;
+#endif
 
 /*
  * Central wireless core regulatory domains, we only need two,
@@ -584,7 +592,7 @@ static int call_crda(const char *alpha2)
 	else
 		pr_debug("Calling CRDA to update world regulatory domain\n");
 
-	ret = kobject_uevent_env(&reg_pdev->dev.kobj, KOBJ_CHANGE, env);
+	ret = kobject_uevent_env(&reg_fdev->dev.kobj, KOBJ_CHANGE, env);
 	if (ret)
 		return ret;
 
@@ -780,7 +788,7 @@ static bool regdb_has_valid_signature(const u8 *data, unsigned int size)
 	const struct firmware *sig;
 	bool result;
 
-	if (request_firmware(&sig, "regulatory.db.p7s", &reg_pdev->dev))
+	if (request_firmware(&sig, "regulatory.db.p7s", &reg_fdev->dev))
 		return false;
 
 	result = verify_pkcs7_signature(data, size, sig->data, sig->size,
@@ -1062,7 +1070,7 @@ static int query_regdb_file(const char *alpha2)
 		return -ENOMEM;
 
 	err = request_firmware_nowait(THIS_MODULE, true, "regulatory.db",
-				      &reg_pdev->dev, GFP_KERNEL,
+				      &reg_fdev->dev, GFP_KERNEL,
 				      (void *)alpha2, regdb_fw_cb);
 	if (err)
 		kfree(alpha2);
@@ -1078,7 +1086,7 @@ int reg_reload_regdb(void)
 	const struct ieee80211_regdomain *current_regdomain;
 	struct regulatory_request *request;
 
-	err = request_firmware(&fw, "regulatory.db", &reg_pdev->dev);
+	err = request_firmware(&fw, "regulatory.db", &reg_fdev->dev);
 	if (err)
 		return err;
 
@@ -4230,6 +4238,8 @@ static void cfg80211_check_and_end_cac(struct cfg80211_registered_device *rdev)
 	struct wireless_dev *wdev;
 	unsigned int link_id;
 
+	guard(wiphy)(&rdev->wiphy);
+
 	/* If we finished CAC or received radar, we should end any
 	 * CAC running on the same channels.
 	 * the check !cfg80211_chandef_dfs_usable contain 2 options:
@@ -4301,12 +4311,20 @@ static int __init regulatory_init_db(void)
 	 * in that case, don't try to do any further work here as
 	 * it's doomed to lead to crashes.
 	 */
-	if (IS_ERR_OR_NULL(reg_pdev))
-		return -EINVAL;
+#if LINUX_VERSION_IS_GEQ(6,14,0)
+	if (!reg_fdev)
+#else
+		if (IS_ERR_OR_NULL(reg_fdev))
+#endif
+			return -EINVAL;
 
 	err = load_builtin_regdb_keys();
 	if (err) {
-		platform_device_unregister(reg_pdev);
+#if LINUX_VERSION_IS_GEQ(6,14,0)
+		faux_device_destroy(reg_fdev);
+#else
+		platform_device_unregister(reg_fdev);
+#endif
 		return err;
 	}
 
@@ -4314,7 +4332,11 @@ static int __init regulatory_init_db(void)
 	err = regulatory_hint_core(cfg80211_world_regdom->alpha2);
 	if (err) {
 		if (err == -ENOMEM) {
-			platform_device_unregister(reg_pdev);
+#if LINUX_VERSION_IS_GEQ(6,14,0)
+			faux_device_destroy(reg_fdev);
+#else
+			platform_device_unregister(reg_fdev);
+#endif
 			return err;
 		}
 		/*
@@ -4343,9 +4365,15 @@ late_initcall(regulatory_init_db);
 
 int __init regulatory_init(void)
 {
-	reg_pdev = platform_device_register_simple("regulatory", 0, NULL, 0);
-	if (IS_ERR(reg_pdev))
-		return PTR_ERR(reg_pdev);
+#if LINUX_VERSION_IS_GEQ(6,14,0)
+	reg_fdev = faux_device_create("regulatory", NULL, NULL);
+	if (!reg_fdev)
+		return -ENODEV;
+#else
+	reg_fdev = platform_device_register_simple("regulatory", 0, NULL, 0);
+	if (IS_ERR(reg_fdev))
+		return PTR_ERR(reg_fdev);
+#endif
 
 	rcu_assign_pointer(cfg80211_regdomain, cfg80211_world_regdom);
 
@@ -4373,9 +4401,13 @@ void regulatory_exit(void)
 	reset_regdomains(true, NULL);
 	rtnl_unlock();
 
-	dev_set_uevent_suppress(&reg_pdev->dev, true);
+	dev_set_uevent_suppress(&reg_fdev->dev, true);
 
-	platform_device_unregister(reg_pdev);
+#if LINUX_VERSION_IS_GEQ(6,14,0)
+	faux_device_destroy(reg_fdev);
+#else
+	platform_device_unregister(reg_fdev);
+#endif
 
 	list_for_each_entry_safe(reg_beacon, btmp, &reg_pending_beacons, list) {
 		list_del(&reg_beacon->list);
