@@ -1023,6 +1023,27 @@ static inline void rdev_stop_nan(struct cfg80211_registered_device *rdev,
 }
 
 static inline int
+rdev_add_nan_func(struct cfg80211_registered_device *rdev,
+		  struct wireless_dev *wdev,
+		  struct cfg80211_nan_func *nan_func)
+{
+	int ret;
+
+	trace_rdev_add_nan_func(&rdev->wiphy, wdev, nan_func);
+	ret = rdev->ops->add_nan_func(&rdev->wiphy, wdev, nan_func);
+	trace_rdev_return_int(&rdev->wiphy, ret);
+	return ret;
+}
+
+static inline void rdev_del_nan_func(struct cfg80211_registered_device *rdev,
+				    struct wireless_dev *wdev, u64 cookie)
+{
+	trace_rdev_del_nan_func(&rdev->wiphy, wdev, cookie);
+	rdev->ops->del_nan_func(&rdev->wiphy, wdev, cookie);
+	trace_rdev_return_void(&rdev->wiphy);
+}
+
+static inline int
 rdev_nan_change_conf(struct cfg80211_registered_device *rdev,
 		     struct wireless_dev *wdev,
 		     struct cfg80211_nan_conf *conf, u32 changes)
