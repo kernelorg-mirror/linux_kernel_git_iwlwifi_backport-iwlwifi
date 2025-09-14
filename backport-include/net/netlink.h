@@ -534,4 +534,10 @@ static inline __be32 nla_get_in_addr_default(const struct nlattr *nla,
 }
 
 #endif /* < 6.13 */
+
+#ifndef nlmsg_for_each_attr_type
+#define nlmsg_for_each_attr_type(pos, type, nlh, hdrlen, rem) \
+	nlmsg_for_each_attr(pos, nlh, hdrlen, rem) \
+		if (nla_type(pos) == type)
+#endif
 #endif /* __BACKPORT_NET_NETLINK_H */
