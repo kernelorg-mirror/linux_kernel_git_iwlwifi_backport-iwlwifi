@@ -15598,6 +15598,9 @@ static int nl80211_nan_add_func(struct sk_buff *skb,
 	if (wdev->iftype != NL80211_IFTYPE_NAN)
 		return -EOPNOTSUPP;
 
+	if (wdev->wiphy->nan_capa.flags & WIPHY_NAN_FLAGS_USERSPACE_DE)
+		return -EOPNOTSUPP;
+
 	if (!wdev_running(wdev))
 		return -ENOTCONN;
 
@@ -15831,6 +15834,9 @@ static int nl80211_nan_del_func(struct sk_buff *skb,
 
 	if (wdev->iftype != NL80211_IFTYPE_NAN)
 		return -EOPNOTSUPP;
+
+	if (wdev->wiphy->nan_capa.flags & WIPHY_NAN_FLAGS_USERSPACE_DE)
+		return -EINVAL;
 
 	if (!wdev_running(wdev))
 		return -ENOTCONN;
