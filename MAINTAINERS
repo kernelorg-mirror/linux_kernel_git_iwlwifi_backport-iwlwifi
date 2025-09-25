@@ -118,7 +118,7 @@ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/wireless/wireless.git
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/wireless/wireless-next.git
 F:	Documentation/driver-api/80211/cfg80211.rst
 F:	Documentation/networking/regulatory.rst
-F:	include/linux/ieee80211.h
+F:	include/linux/ieee80211*.h
 F:	include/net/cfg80211.h
 F:	include/net/ieee80211_radiotap.h
 F:	include/net/iw_handler.h
