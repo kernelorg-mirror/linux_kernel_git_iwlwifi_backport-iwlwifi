@@ -4482,6 +4482,11 @@ static const struct ieee80211_sband_iftype_data sband_capa_2ghz[] = {
 			},
 			/* PPE threshold information is not supported */
 		},
+		.uhr_cap = {
+			.has_uhr = true,
+			.phy.cap = IEEE80211_UHR_PHY_CAP_ELR_RX |
+				   IEEE80211_UHR_PHY_CAP_ELR_TX,
+		},
 	},
 	{
 		.types_mask = BIT(NL80211_IFTYPE_AP) |
@@ -4589,6 +4594,11 @@ static const struct ieee80211_sband_iftype_data sband_capa_2ghz[] = {
 				},
 			},
 			/* PPE threshold information is not supported */
+		},
+		.uhr_cap = {
+			.has_uhr = true,
+			.phy.cap = IEEE80211_UHR_PHY_CAP_ELR_RX |
+				   IEEE80211_UHR_PHY_CAP_ELR_TX,
 		},
 	},
 #ifdef CPTCFG_MAC80211_MESH
@@ -4759,6 +4769,11 @@ static const struct ieee80211_sband_iftype_data sband_capa_5ghz[] = {
 			},
 			/* PPE threshold information is not supported */
 		},
+		.uhr_cap = {
+			.has_uhr = true,
+			.phy.cap = IEEE80211_UHR_PHY_CAP_ELR_RX |
+				   IEEE80211_UHR_PHY_CAP_ELR_TX,
+		},
 	},
 	{
 		.types_mask = BIT(NL80211_IFTYPE_AP) |
@@ -4883,6 +4898,11 @@ static const struct ieee80211_sband_iftype_data sband_capa_5ghz[] = {
 				},
 			},
 			/* PPE threshold information is not supported */
+		},
+		.uhr_cap = {
+			.has_uhr = true,
+			.phy.cap = IEEE80211_UHR_PHY_CAP_ELR_RX |
+				   IEEE80211_UHR_PHY_CAP_ELR_TX,
 		},
 	},
 #ifdef CPTCFG_MAC80211_MESH
@@ -5077,6 +5097,11 @@ static const struct ieee80211_sband_iftype_data sband_capa_6ghz[] = {
 			},
 			/* PPE threshold information is not supported */
 		},
+		.uhr_cap = {
+			.has_uhr = true,
+			.phy.cap = IEEE80211_UHR_PHY_CAP_ELR_RX |
+				   IEEE80211_UHR_PHY_CAP_ELR_TX,
+		},
 	},
 	{
 		.types_mask = BIT(NL80211_IFTYPE_AP) |
@@ -5223,6 +5248,11 @@ static const struct ieee80211_sband_iftype_data sband_capa_6ghz[] = {
 			},
 			/* PPE threshold information is not supported */
 		},
+		.uhr_cap = {
+			.has_uhr = true,
+			.phy.cap = IEEE80211_UHR_PHY_CAP_ELR_RX |
+				   IEEE80211_UHR_PHY_CAP_ELR_TX,
+		},
 	},
 #ifdef CPTCFG_MAC80211_MESH
 	{
@@ -5313,6 +5343,11 @@ static const struct ieee80211_sband_iftype_data sband_capa_6ghz[] = {
 				},
 			},
 			/* PPE threshold information is not supported */
+		},
+		.uhr_cap = {
+			.has_uhr = true,
+			.phy.cap = IEEE80211_UHR_PHY_CAP_ELR_RX |
+				   IEEE80211_UHR_PHY_CAP_ELR_TX,
 		},
 	},
 #endif
