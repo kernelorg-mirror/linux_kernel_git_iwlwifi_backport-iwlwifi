@@ -106,16 +106,6 @@ struct wiphy;
  * @IEEE80211_CHAN_NO_10MHZ: 10 MHz bandwidth is not permitted
  *	on this channel.
  * @IEEE80211_CHAN_NO_HE: HE operation is not permitted on this channel.
- * @IEEE80211_CHAN_1MHZ: 1 MHz bandwidth is permitted
- *	on this channel.
- * @IEEE80211_CHAN_2MHZ: 2 MHz bandwidth is permitted
- *	on this channel.
- * @IEEE80211_CHAN_4MHZ: 4 MHz bandwidth is permitted
- *	on this channel.
- * @IEEE80211_CHAN_8MHZ: 8 MHz bandwidth is permitted
- *	on this channel.
- * @IEEE80211_CHAN_16MHZ: 16 MHz bandwidth is permitted
- *	on this channel.
  * @IEEE80211_CHAN_NO_320MHZ: If the driver supports 320 MHz on the band,
  *	this flag indicates that a 320 MHz channel cannot use this
  *	channel as the control or any of the secondary channels.
@@ -134,6 +124,13 @@ struct wiphy;
  *	with very low power (VLP), even if otherwise set to NO_IR.
  * @IEEE80211_CHAN_ALLOW_20MHZ_ACTIVITY: Allow activity on a 20 MHz channel,
  *	even if otherwise set to NO_IR.
+ * @IEEE80211_CHAN_S1G_NO_PRIMARY: Prevents the channel for use as an S1G
+ *	primary channel. Does not prevent the wider operating channel
+ *	described by the chandef from being used. In order for a 2MHz primary
+ *	to be used, both 1MHz subchannels shall not contain this flag.
+ * @IEEE80211_CHAN_NO_4MHZ: 4 MHz bandwidth is not permitted on this channel.
+ * @IEEE80211_CHAN_NO_8MHZ: 8 MHz bandwidth is not permitted on this channel.
+ * @IEEE80211_CHAN_NO_16MHZ: 16 MHz bandwidth is not permitted on this channel.
  */
 enum ieee80211_channel_flags {
 	IEEE80211_CHAN_DISABLED			= BIT(0),
@@ -150,11 +147,7 @@ enum ieee80211_channel_flags {
 	IEEE80211_CHAN_NO_20MHZ			= BIT(11),
 	IEEE80211_CHAN_NO_10MHZ			= BIT(12),
 	IEEE80211_CHAN_NO_HE			= BIT(13),
-	IEEE80211_CHAN_1MHZ			= BIT(14),
-	IEEE80211_CHAN_2MHZ			= BIT(15),
-	IEEE80211_CHAN_4MHZ			= BIT(16),
-	IEEE80211_CHAN_8MHZ			= BIT(17),
-	IEEE80211_CHAN_16MHZ			= BIT(18),
+	/* can use free bits here */
 	IEEE80211_CHAN_NO_320MHZ		= BIT(19),
 	IEEE80211_CHAN_NO_EHT			= BIT(20),
 	IEEE80211_CHAN_DFS_CONCURRENT		= BIT(21),
@@ -163,6 +156,10 @@ enum ieee80211_channel_flags {
 	IEEE80211_CHAN_CAN_MONITOR		= BIT(24),
 	IEEE80211_CHAN_ALLOW_6GHZ_VLP_AP	= BIT(25),
 	IEEE80211_CHAN_ALLOW_20MHZ_ACTIVITY     = BIT(26),
+	IEEE80211_CHAN_S1G_NO_PRIMARY		= BIT(27),
+	IEEE80211_CHAN_NO_4MHZ			= BIT(28),
+	IEEE80211_CHAN_NO_8MHZ			= BIT(29),
+	IEEE80211_CHAN_NO_16MHZ			= BIT(30),
 };
 
 #define IEEE80211_CHAN_NO_HT40 \
@@ -826,6 +823,9 @@ struct key_params {
  * @punctured: mask of the punctured 20 MHz subchannels, with
  *	bits turned on being disabled (punctured); numbered
  *	from lower to higher frequency (like in the spec)
+ * @s1g_primary_2mhz: Indicates if the control channel pointed to
+ *	by 'chan' exists as a 1MHz primary subchannel within an
+ *	S1G 2MHz primary channel.
  */
 struct cfg80211_chan_def {
 	struct ieee80211_channel *chan;
@@ -835,6 +835,7 @@ struct cfg80211_chan_def {
 	struct ieee80211_edmg edmg;
 	u16 freq1_offset;
 	u16 punctured;
+	bool s1g_primary_2mhz;
 };
 
 /*
@@ -846,9 +847,12 @@ struct cfg80211_bitrate_mask {
 		u8 ht_mcs[IEEE80211_HT_MCS_MASK_LEN];
 		u16 vht_mcs[NL80211_VHT_NSS_MAX];
 		u16 he_mcs[NL80211_HE_NSS_MAX];
+		u16 eht_mcs[NL80211_EHT_NSS_MAX];
 		enum nl80211_txrate_gi gi;
 		enum nl80211_he_gi he_gi;
+		enum nl80211_eht_gi eht_gi;
 		enum nl80211_he_ltf he_ltf;
+		enum nl80211_eht_ltf eht_ltf;
 	} control[NUM_NL80211_BANDS];
 };
 
@@ -990,6 +994,18 @@ static inline bool
 cfg80211_chandef_is_edmg(const struct cfg80211_chan_def *chandef)
 {
 	return chandef->edmg.channels || chandef->edmg.bw_config;
+}
+
+/**
+ * cfg80211_chandef_is_s1g - check if chandef represents an S1G channel
+ * @chandef: the channel definition
+ *
+ * Return: %true if S1G.
+ */
+static inline bool
+cfg80211_chandef_is_s1g(const struct cfg80211_chan_def *chandef)
+{
+	return chandef->chan->band == NL80211_BAND_S1GHZ;
 }
 
 /**
@@ -2463,6 +2479,29 @@ struct mpath_info {
 	u32 path_change_count;
 
 	int generation;
+};
+
+/**
+ * enum wiphy_bss_param_flags - bit positions for supported bss parameters.
+ *
+ * @WIPHY_BSS_PARAM_CTS_PROT: support changing CTS protection.
+ * @WIPHY_BSS_PARAM_SHORT_PREAMBLE: support changing short preamble usage.
+ * @WIPHY_BSS_PARAM_SHORT_SLOT_TIME: support changing short slot time usage.
+ * @WIPHY_BSS_PARAM_BASIC_RATES: support reconfiguring basic rates.
+ * @WIPHY_BSS_PARAM_AP_ISOLATE: support changing AP isolation.
+ * @WIPHY_BSS_PARAM_HT_OPMODE: support changing HT operating mode.
+ * @WIPHY_BSS_PARAM_P2P_CTWINDOW: support reconfiguring ctwindow.
+ * @WIPHY_BSS_PARAM_P2P_OPPPS: support changing P2P opportunistic power-save.
+ */
+enum wiphy_bss_param_flags {
+	WIPHY_BSS_PARAM_CTS_PROT = BIT(0),
+	WIPHY_BSS_PARAM_SHORT_PREAMBLE = BIT(1),
+	WIPHY_BSS_PARAM_SHORT_SLOT_TIME = BIT(2),
+	WIPHY_BSS_PARAM_BASIC_RATES = BIT(3),
+	WIPHY_BSS_PARAM_AP_ISOLATE = BIT(4),
+	WIPHY_BSS_PARAM_HT_OPMODE = BIT(5),
+	WIPHY_BSS_PARAM_P2P_CTWINDOW = BIT(6),
+	WIPHY_BSS_PARAM_P2P_OPPPS = BIT(7),
 };
 
 /**
@@ -5890,6 +5929,11 @@ struct wiphy_nan_capa {
  *	and probe responses.  This value should be set if the driver
  *	wishes to limit the number of csa counters. Default (0) means
  *	infinite.
+ * @bss_param_support: bitmask indicating which bss_parameters as defined in
+ *	&struct bss_parameters the driver can actually handle in the
+ *	.change_bss() callback. The bit positions are defined in &enum
+ *	wiphy_bss_param_flags.
+ *
  * @bss_select_support: bitmask indicating the BSS selection criteria supported
  *	by the driver in the .connect() callback. The bit position maps to the
  *	attribute indices defined in &enum nl80211_bss_select_attr.
@@ -6079,6 +6123,7 @@ struct wiphy {
 
 	u8 max_num_csa_counters;
 
+	u32 bss_param_support;
 	u32 bss_select_support;
 
 	u8 nan_supported_bands;
@@ -6848,16 +6893,6 @@ ieee80211_channel_to_khz(const struct ieee80211_channel *chan)
 {
 	return MHZ_TO_KHZ(chan->center_freq) + chan->freq_offset;
 }
-
-/**
- * ieee80211_s1g_channel_width - get allowed channel width from @chan
- *
- * Only allowed for band NL80211_BAND_S1GHZ
- * @chan: channel
- * Return: The allowed channel width for this center_freq
- */
-enum nl80211_chan_width
-ieee80211_s1g_channel_width(const struct ieee80211_channel *chan);
 
 /**
  * ieee80211_channel_to_freq_khz - convert channel number to frequency
@@ -9742,7 +9777,7 @@ int cfg80211_iter_combinations(struct wiphy *wiphy,
  * @wiphy: the wiphy
  * @chan: channel for which the supported radio index is required
  *
- * Return: radio index on success or a negative error code
+ * Return: radio index on success or -EINVAL otherwise
  */
 int cfg80211_get_radio_idx_by_chan(struct wiphy *wiphy,
 				   const struct ieee80211_channel *chan);
@@ -10266,5 +10301,73 @@ ssize_t wiphy_locked_debugfs_write(struct wiphy *wiphy, struct file *file,
 						      void *data),
 				   void *data);
 #endif
+
+/**
+ * cfg80211_s1g_get_start_freq_khz - get S1G chandef start frequency
+ * @chandef: the chandef to use
+ *
+ * Return: the chandefs starting frequency in KHz
+ */
+static inline u32
+cfg80211_s1g_get_start_freq_khz(const struct cfg80211_chan_def *chandef)
+{
+	u32 bw_mhz = cfg80211_chandef_get_width(chandef);
+	u32 center_khz =
+		MHZ_TO_KHZ(chandef->center_freq1) + chandef->freq1_offset;
+	return center_khz - bw_mhz * 500 + 500;
+}
+
+/**
+ * cfg80211_s1g_get_end_freq_khz - get S1G chandef end frequency
+ * @chandef: the chandef to use
+ *
+ * Return: the chandefs ending frequency in KHz
+ */
+static inline u32
+cfg80211_s1g_get_end_freq_khz(const struct cfg80211_chan_def *chandef)
+{
+	u32 bw_mhz = cfg80211_chandef_get_width(chandef);
+	u32 center_khz =
+		MHZ_TO_KHZ(chandef->center_freq1) + chandef->freq1_offset;
+	return center_khz + bw_mhz * 500 - 500;
+}
+
+/**
+ * cfg80211_s1g_get_primary_sibling - retrieve the sibling 1MHz subchannel
+ *	for an S1G chandef using a 2MHz primary channel.
+ * @wiphy: wiphy the channel belongs to
+ * @chandef: the chandef to use
+ *
+ * When chandef::s1g_primary_2mhz is set to true, we are operating on a 2MHz
+ * primary channel. The 1MHz subchannel designated by the primary channel
+ * location exists within chandef::chan, whilst the 'sibling' is denoted as
+ * being the other 1MHz subchannel that make up the 2MHz primary channel.
+ *
+ * Returns: the sibling 1MHz &struct ieee80211_channel, or %NULL on failure.
+ */
+static inline struct ieee80211_channel *
+cfg80211_s1g_get_primary_sibling(struct wiphy *wiphy,
+				 const struct cfg80211_chan_def *chandef)
+{
+	int width_mhz = cfg80211_chandef_get_width(chandef);
+	u32 pri_1mhz_khz, sibling_1mhz_khz, op_low_1mhz_khz, pri_index;
+
+	if (!chandef->s1g_primary_2mhz || width_mhz < 2)
+		return NULL;
+
+	pri_1mhz_khz = ieee80211_channel_to_khz(chandef->chan);
+	op_low_1mhz_khz = cfg80211_s1g_get_start_freq_khz(chandef);
+
+	/*
+	 * Compute the index of the primary 1 MHz subchannel within the
+	 * operating channel, relative to the lowest 1 MHz center frequency.
+	 * Flip the least significant bit to select the even/odd sibling,
+	 * then translate that index back into a channel frequency.
+	 */
+	pri_index = (pri_1mhz_khz - op_low_1mhz_khz) / 1000;
+	sibling_1mhz_khz = op_low_1mhz_khz + ((pri_index ^ 1) * 1000);
+
+	return ieee80211_get_channel_khz(wiphy, sibling_1mhz_khz);
+}
 
 #endif /* __NET_CFG80211_H */

@@ -1963,8 +1963,9 @@ enum nl80211_commands {
  *	The driver must also specify support for this with the extended
  *	features NL80211_EXT_FEATURE_BEACON_RATE_LEGACY,
  *	NL80211_EXT_FEATURE_BEACON_RATE_HT,
- *	NL80211_EXT_FEATURE_BEACON_RATE_VHT and
- *	NL80211_EXT_FEATURE_BEACON_RATE_HE.
+ *	NL80211_EXT_FEATURE_BEACON_RATE_VHT,
+ *	NL80211_EXT_FEATURE_BEACON_RATE_HE and
+ *	NL80211_EXT_FEATURE_BEACON_RATE_EHT.
  *
  * @NL80211_ATTR_FRAME_MATCH: A binary attribute which typically must contain
  *	at least one byte, currently used with @NL80211_CMD_REGISTER_FRAME.
@@ -2303,7 +2304,8 @@ enum nl80211_commands {
  * @NL80211_ATTR_PEER_AID: Association ID for the peer TDLS station (u16).
  *	This is similar to @NL80211_ATTR_STA_AID but with a difference of being
  *	allowed to be used with the first @NL80211_CMD_SET_STATION command to
- *	update a TDLS peer STA entry.
+ *	update a TDLS peer STA entry. For S1G interfaces, this is limited to
+ *	1600 for the current mac80211 implementation.
  *
  * @NL80211_ATTR_COALESCE_RULE: Coalesce rule information.
  *
@@ -2948,6 +2950,12 @@ enum nl80211_commands {
  *	required alongside this attribute. Refer to
  *	@enum nl80211_s1g_short_beacon_attrs for the attribute definitions.
  *
+ * @NL80211_ATTR_BSS_PARAM: nested attribute used with %NL80211_CMD_GET_WIPHY
+ *	which indicates which BSS parameters can be modified. The attribute can
+ *	also be used as flag attribute by user-space in %NL80211_CMD_SET_BSS to
+ *	indicate that it wants strict checking on the BSS parameters to be
+ *	modified.
+ *
  * @NL80211_ATTR_NAN_CONFIG: Nested attribute for
  *	extended NAN cluster configuration. This is used with
  *	%NL80211_CMD_START_NAN and %NL80211_CMD_CHANGE_NAN_CONFIG.
@@ -2960,6 +2968,10 @@ enum nl80211_commands {
  *	This is used with %NL80211_CMD_GET_WIPHY to indicate the NAN
  *	capabilities supported by the driver. See &enum nl80211_nan_capabilities
  *	for details.
+ *
+ * @NL80211_ATTR_S1G_PRIMARY_2MHZ: flag attribute indicating that the S1G
+ *	primary channel is 2 MHz wide, and the control channel designates
+ *	the 1 MHz primary subchannel within that 2 MHz primary.
  *
  * @NUM_NL80211_ATTR: total number of nl80211_attrs available
  * @NL80211_ATTR_MAX: highest attribute number currently defined
@@ -3522,10 +3534,12 @@ enum nl80211_attrs {
 
 	NL80211_ATTR_S1G_LONG_BEACON_PERIOD,
 	NL80211_ATTR_S1G_SHORT_BEACON,
-
+	NL80211_ATTR_BSS_PARAM,
 	NL80211_ATTR_NAN_CONFIG,
 	NL80211_ATTR_NAN_NEW_CLUSTER,
 	NL80211_ATTR_NAN_CAPABILITIES,
+
+	NL80211_ATTR_S1G_PRIMARY_2MHZ,
 
 	/* add attributes here, update the policy in nl80211.c */
 
@@ -3770,6 +3784,22 @@ enum nl80211_eht_gi {
 	NL80211_RATE_INFO_EHT_GI_0_8,
 	NL80211_RATE_INFO_EHT_GI_1_6,
 	NL80211_RATE_INFO_EHT_GI_3_2,
+};
+
+/**
+ * enum nl80211_eht_ltf - EHT long training field
+ * @NL80211_RATE_INFO_EHT_1XLTF: 3.2 usec
+ * @NL80211_RATE_INFO_EHT_2XLTF: 6.4 usec
+ * @NL80211_RATE_INFO_EHT_4XLTF: 12.8 usec
+ * @NL80211_RATE_INFO_EHT_6XLTF: 19.2 usec
+ * @NL80211_RATE_INFO_EHT_8XLTF: 25.6 usec
+ */
+enum nl80211_eht_ltf {
+	NL80211_RATE_INFO_EHT_1XLTF,
+	NL80211_RATE_INFO_EHT_2XLTF,
+	NL80211_RATE_INFO_EHT_4XLTF,
+	NL80211_RATE_INFO_EHT_6XLTF,
+	NL80211_RATE_INFO_EHT_8XLTF,
 };
 
 /**
@@ -4408,6 +4438,12 @@ enum nl80211_wmm_rule {
  *	very low power (VLP) AP, despite being NO_IR.
  * @NL80211_FREQUENCY_ATTR_ALLOW_20MHZ_ACTIVITY: This channel can be active in
  *	20 MHz bandwidth, despite being NO_IR.
+ * @NL80211_FREQUENCY_ATTR_NO_4MHZ: 4 MHz operation is not allowed on this
+ *	channel in current regulatory domain.
+ * @NL80211_FREQUENCY_ATTR_NO_8MHZ: 8 MHz operation is not allowed on this
+ *	channel in current regulatory domain.
+ * @NL80211_FREQUENCY_ATTR_NO_16MHZ: 16 MHz operation is not allowed on this
+ *	channel in current regulatory domain.
  * @NL80211_FREQUENCY_ATTR_MAX: highest frequency attribute number
  *	currently defined
  * @__NL80211_FREQUENCY_ATTR_AFTER_LAST: internal use
@@ -4453,6 +4489,9 @@ enum nl80211_frequency_attr {
 	NL80211_FREQUENCY_ATTR_CAN_MONITOR,
 	NL80211_FREQUENCY_ATTR_ALLOW_6GHZ_VLP_AP,
 	NL80211_FREQUENCY_ATTR_ALLOW_20MHZ_ACTIVITY,
+	NL80211_FREQUENCY_ATTR_NO_4MHZ,
+	NL80211_FREQUENCY_ATTR_NO_8MHZ,
+	NL80211_FREQUENCY_ATTR_NO_16MHZ,
 
 	/* keep last */
 	__NL80211_FREQUENCY_ATTR_AFTER_LAST,
@@ -5518,6 +5557,10 @@ enum nl80211_key_attributes {
  *	see &struct nl80211_txrate_he
  * @NL80211_TXRATE_HE_GI: configure HE GI, 0.8us, 1.6us and 3.2us.
  * @NL80211_TXRATE_HE_LTF: configure HE LTF, 1XLTF, 2XLTF and 4XLTF.
+ * @NL80211_TXRATE_EHT: EHT rates allowed for TX rate selection,
+ *	see &struct nl80211_txrate_eht
+ * @NL80211_TXRATE_EHT_GI: configure EHT GI, (u8, see &enum nl80211_eht_gi)
+ * @NL80211_TXRATE_EHT_LTF: configure EHT LTF, (u8, see &enum nl80211_eht_ltf)
  * @__NL80211_TXRATE_AFTER_LAST: internal
  * @NL80211_TXRATE_MAX: highest TX rate attribute
  */
@@ -5530,6 +5573,9 @@ enum nl80211_tx_rate_attributes {
 	NL80211_TXRATE_HE,
 	NL80211_TXRATE_HE_GI,
 	NL80211_TXRATE_HE_LTF,
+	NL80211_TXRATE_EHT,
+	NL80211_TXRATE_EHT_GI,
+	NL80211_TXRATE_EHT_LTF,
 
 	/* keep last */
 	__NL80211_TXRATE_AFTER_LAST,
@@ -5560,6 +5606,15 @@ enum nl80211_txrate_gi {
 	NL80211_TXRATE_DEFAULT_GI,
 	NL80211_TXRATE_FORCE_SGI,
 	NL80211_TXRATE_FORCE_LGI,
+};
+
+#define NL80211_EHT_NSS_MAX             16
+/**
+ * struct nl80211_txrate_eht - EHT MCS/NSS txrate bitmap
+ * @mcs: MCS bitmap table for each NSS (array index 0 for 1 stream, etc.)
+ */
+struct nl80211_txrate_eht {
+	__u16 mcs[NL80211_EHT_NSS_MAX];
 };
 
 /**
@@ -6686,6 +6741,9 @@ enum nl80211_feature_flags {
  *	(signaling and payload protected) A-MSDUs and this shall be advertised
  *	in the RSNXE.
  *
+ * @NL80211_EXT_FEATURE_BEACON_RATE_EHT: Driver supports beacon rate
+ *	configuration (AP/mesh) with EHT rates.
+ *
  * @NUM_NL80211_EXT_FEATURES: number of extended features.
  * @MAX_NL80211_EXT_FEATURES: highest extended feature index.
  */
@@ -6761,6 +6819,7 @@ enum nl80211_ext_feature_index {
 	NL80211_EXT_FEATURE_OWE_OFFLOAD_AP,
 	NL80211_EXT_FEATURE_DFS_CONCURRENT,
 	NL80211_EXT_FEATURE_SPP_AMSDU_SUPPORT,
+	NL80211_EXT_FEATURE_BEACON_RATE_EHT,
 
 	/* add new features before the definition below */
 	NUM_NL80211_EXT_FEATURES,
