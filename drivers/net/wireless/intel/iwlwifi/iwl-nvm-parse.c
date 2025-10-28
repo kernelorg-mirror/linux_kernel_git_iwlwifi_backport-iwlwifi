@@ -872,6 +872,16 @@ iwl_nvm_fixup_sband_iftd(struct iwl_trans *trans,
 	if (!data->sku_cap_11bn_enable || !iftype_data->eht_cap.has_eht)
 		iftype_data->uhr_cap.has_uhr = false;
 
+	if (sband->band != NL80211_BAND_2GHZ) {
+		/* on 5 and 6 GHz ELR is uplink only */
+		if (is_ap)
+			iftype_data->uhr_cap.phy.cap &=
+				~IEEE80211_UHR_PHY_CAP_ELR_TX;
+		else
+			iftype_data->uhr_cap.phy.cap &=
+				~IEEE80211_UHR_PHY_CAP_ELR_RX;
+	}
+
 	/* Advertise an A-MPDU exponent extension based on
 	 * operating band
 	 */
