@@ -40,7 +40,8 @@ mac80211-y := \
 	tdls.o \
 	ocb.o \
 	airtime.o \
-	eht.o uhr.o
+	eht.o uhr.o \
+	nan.o
 
 mac80211-$(CPTCFG_MAC80211_LEDS) += led.o
 mac80211-$(CPTCFG_MAC80211_DEBUGFS) += \
