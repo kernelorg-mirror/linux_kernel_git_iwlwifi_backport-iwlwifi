@@ -1360,7 +1360,7 @@
  * @NL80211_CMD_NAN_CLUSTER_JOINED: This command is used to notify
  *	user space that the NAN new cluster has been joined. The cluster ID is
  *	indicated by %NL80211_ATTR_MAC.
- * @NL80211_CMD_SET_LOCAL_NAN_SCHED: Set the local NAN schedule. NAN must be
+ * @NL80211_CMD_NAN_SET_LOCAL_SCHED: Set the local NAN schedule. NAN must be
  *	operational (%NL80211_CMD_START_NAN was executed). Must contain both of
  *	%NL80211_ATTR_NAN_TIME_SLOTS, but %NL80211_ATTR_NAN_CHANNEL is optional.
  *	(for example in case of a channel removal, that channel won't be
@@ -1628,7 +1628,7 @@ enum nl80211_commands {
 	NL80211_CMD_NAN_NEXT_DW_NOTIFICATION,
 	NL80211_CMD_NAN_CLUSTER_JOINED,
 
-	NL80211_CMD_SET_LOCAL_NAN_SCHED,
+	NL80211_CMD_NAN_SET_LOCAL_SCHED,
 
 	/* add new commands above here */
 
@@ -2990,7 +2990,7 @@ enum nl80211_commands {
  *	attributes of this type, each one represents a channel definition and
  *	consists of top-level attributes like %NL80211_ATTR_WIPHY_FREQ. Must
  *	contain %NL80211_ATTR_NAN_CHANNEL_ENTRY.
- *	This attribute is used with %NL80211_CMD_SET_LOCAL_NAN_SCHED to specify
+ *	This attribute is used with %NL80211_CMD_NAN_SET_LOCAL_SCHED to specify
  *	the channel definitions on which the radio needs to operate during
  *	specific time slots. All of the channel definitions should be mutually
  *	incompatible. The number of channels should fit the current

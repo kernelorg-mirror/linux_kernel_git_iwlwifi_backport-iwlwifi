@@ -19356,7 +19356,7 @@ static const struct genl_small_ops nl80211_small_ops[] = {
 		.internal_flags = IFLAGS(NL80211_FLAG_NEED_NETDEV_UP),
 	},
 	{
-		.cmd = NL80211_CMD_SET_LOCAL_NAN_SCHED,
+		.cmd = NL80211_CMD_NAN_SET_LOCAL_SCHED,
 		.doit = nl80211_nan_set_local_sched,
 		.flags = GENL_ADMIN_PERM,
 		.internal_flags = IFLAGS(NL80211_FLAG_NEED_WDEV_UP),
