@@ -3118,6 +3118,9 @@ enum nl80211_commands {
  *	schedule update completed successfully. If this flag is not present,
  *	the update failed.
  *
+ * @NL80211_ATTR_NPCA_PRIMARY_FREQ: NPCA primary channel (u32)
+ * @NL80211_ATTR_NPCA_PUNCT_BITMAP: NPCA puncturing bitmap (u32)
+ *
  * @NUM_NL80211_ATTR: total number of nl80211_attrs available
  * @NL80211_ATTR_MAX: highest attribute number currently defined
  * @__NL80211_ATTR_AFTER_LAST: internal use
@@ -3704,6 +3707,9 @@ enum nl80211_attrs {
 	NL80211_ATTR_NAN_AVAIL_BLOB,
 	NL80211_ATTR_NAN_SCHED_DEFERRED,
 	NL80211_ATTR_NAN_SCHED_UPDATE_SUCCESS,
+
+	NL80211_ATTR_NPCA_PRIMARY_FREQ,
+	NL80211_ATTR_NPCA_PUNCT_BITMAP,
 
 	/* add attributes here, update the policy in nl80211.c */
 
