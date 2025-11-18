@@ -16445,8 +16445,8 @@ static int nl80211_parse_nan_channel(struct cfg80211_registered_device *rdev,
 	if (ret)
 		return ret;
 
-	ret = _nl80211_parse_chandef(rdev, info->extack, channel_parsed,
-				     NL80211_IFTYPE_NAN, &chandef);
+	ret = nl80211_parse_chandef(rdev, info->extack, channel_parsed,
+				    &chandef);
 	if (ret)
 		return ret;
 
