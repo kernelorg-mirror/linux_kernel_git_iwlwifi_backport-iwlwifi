@@ -4067,10 +4067,12 @@ struct cfg80211_nan_conf {
  * @channel_entry: pointer to the Channel Entry blob as defined in Wi-Fi Aware
  *	(TM) 4.0 specification Table 100 (Channel Entry format for the NAN
  *	Availability attribute).
+ * @rx_nss: number of spatial streams supported on this channel
  */
 struct cfg80211_nan_channel {
 	struct cfg80211_chan_def chandef;
 	const u8 *channel_entry;
+	u8 rx_nss;
 };
 
 /**

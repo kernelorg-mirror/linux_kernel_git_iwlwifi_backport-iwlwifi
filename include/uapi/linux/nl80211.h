@@ -2989,7 +2989,8 @@ enum nl80211_commands {
  * @NL80211_ATTR_NAN_CHANNEL: This is a nested attribute. There can be multiple
  *	attributes of this type, each one represents a channel definition and
  *	consists of top-level attributes like %NL80211_ATTR_WIPHY_FREQ. Must
- *	contain %NL80211_ATTR_NAN_CHANNEL_ENTRY.
+ *	contain %NL80211_ATTR_NAN_CHANNEL_ENTRY and
+ *	%NL80211_ATTR_NAN_RX_NSS.
  *	This attribute is used with %NL80211_CMD_NAN_SET_LOCAL_SCHED to specify
  *	the channel definitions on which the radio needs to operate during
  *	specific time slots. All of the channel definitions should be mutually
@@ -2998,6 +2999,9 @@ enum nl80211_commands {
  * @NL80211_ATTR_NAN_CHANNEL_ENTRY: a byte array of 6 bytes. contains the
  *	Channel Entry as defined in Wi-Fi Aware (TM) 4.0 specification Table
  *	100 (Channel Entry format for the NAN Availability attribute).
+ * @NL80211_ATTR_NAN_RX_NSS: (u8) RX NSS used for a peer NAN channel. This is
+ *	used with %NL80211_ATTR_NAN_CHANNEL when configuring
+ *	peer NAN channels with %NL80211_CMD_NAN_SET_PEER_SCHED.
  * @NL80211_ATTR_NAN_TIME_SLOTS: an array of u8 values and 32 cells. each value
  *	maps a time slot to the chandef on which the radio should operate on in
  *	that time. %NL80211_NAN_SCHED_NOT_AVAIL_SLOT indicates unscheduled.
@@ -3581,6 +3585,7 @@ enum nl80211_attrs {
 	NL80211_ATTR_NAN_CHANNEL,
 	NL80211_ATTR_NAN_CHANNEL_ENTRY,
 	NL80211_ATTR_NAN_TIME_SLOTS,
+	NL80211_ATTR_NAN_RX_NSS,
 
 	/* add attributes here, update the policy in nl80211.c */
 

@@ -982,6 +982,7 @@ static const struct nla_policy nl80211_policy[NUM_NL80211_ATTR] = {
 	[NL80211_ATTR_DISABLE_UHR] = { .type = NLA_FLAG },
 	[NL80211_ATTR_NAN_CHANNEL] = NLA_POLICY_NESTED(nl80211_policy),
 	[NL80211_ATTR_NAN_CHANNEL_ENTRY] = NLA_POLICY_EXACT_LEN(6),
+	[NL80211_ATTR_NAN_RX_NSS] = { .type = NLA_U8 },
 	[NL80211_ATTR_NAN_TIME_SLOTS] =
 		NLA_POLICY_EXACT_LEN(CFG80211_NAN_SCHED_NUM_TIME_SLOTS),
 };
@@ -16435,6 +16436,7 @@ static int nl80211_parse_nan_channel(struct cfg80211_registered_device *rdev,
 {
 	struct nlattr **channel_parsed __free(kfree) = NULL;
 	struct cfg80211_chan_def chandef;
+	u8 n_rx_nss;
 	int ret;
 
 	channel_parsed = kcalloc(NL80211_ATTR_MAX + 1, sizeof(*channel_parsed),
@@ -16479,6 +16481,20 @@ static int nl80211_parse_nan_channel(struct cfg80211_registered_device *rdev,
 
 	sched->nan_channels[index].channel_entry =
 		nla_data(channel_parsed[NL80211_ATTR_NAN_CHANNEL_ENTRY]);
+
+	if (!channel_parsed[NL80211_ATTR_NAN_RX_NSS])
+		return -EINVAL;
+
+	sched->nan_channels[index].rx_nss =
+		nla_get_u8(channel_parsed[NL80211_ATTR_NAN_RX_NSS]);
+
+	n_rx_nss = u8_get_bits(rdev->wiphy.nan_capa.n_antennas, 0x03);
+	if (sched->nan_channels[index].rx_nss > n_rx_nss ||
+	    !sched->nan_channels[index].rx_nss) {
+		NL_SET_ERR_MSG_ATTR(info->extack, channel,
+				    "Invalid RX NSS in NAN channel definition");
+		return -EINVAL;
+	}
 
 	sched->nan_channels[index].chandef = chandef;
 
