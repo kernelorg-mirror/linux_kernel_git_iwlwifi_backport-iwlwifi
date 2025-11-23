@@ -7532,7 +7532,7 @@ nla_put_failure:
 static int nl80211_send_station(struct sk_buff *msg, u32 cmd, u32 portid,
 				u32 seq, int flags,
 				struct cfg80211_registered_device *rdev,
-				struct net_device *dev,
+				struct wireless_dev *wdev,
 				const u8 *mac_addr, struct station_info *sinfo,
 				bool link_stats)
 {
@@ -7548,7 +7548,10 @@ static int nl80211_send_station(struct sk_buff *msg, u32 cmd, u32 portid,
 		return -1;
 	}
 
-	if (nla_put_u32(msg, NL80211_ATTR_IFINDEX, dev->ifindex) ||
+	if ((wdev->netdev &&
+	     nla_put_u32(msg, NL80211_ATTR_IFINDEX, wdev->netdev->ifindex)) ||
+	    nla_put_u64_64bit(msg, NL80211_ATTR_WDEV, wdev_id(wdev),
+			      NL80211_ATTR_PAD) ||
 	    nla_put(msg, NL80211_ATTR_MAC, ETH_ALEN, mac_addr) ||
 	    nla_put_u32(msg, NL80211_ATTR_GENERATION, sinfo->generation))
 		goto nla_put_failure;
@@ -8027,7 +8030,7 @@ static int nl80211_dump_station(struct sk_buff *skb,
 			sinfo_alloc = true;
 		}
 
-		err = rdev_dump_station(rdev, wdev->netdev, sta_idx,
+		err = rdev_dump_station(rdev, wdev, sta_idx,
 					mac_addr, &sinfo);
 		if (err == -ENOENT)
 			break;
@@ -8045,7 +8048,7 @@ static int nl80211_dump_station(struct sk_buff *skb,
 		if (nl80211_send_station(skb, NL80211_CMD_NEW_STATION,
 				NETLINK_CB(cb->skb).portid,
 				cb->nlh->nlmsg_seq, NLM_F_MULTI,
-				rdev, wdev->netdev, mac_addr,
+				rdev, wdev, mac_addr,
 				&sinfo, false) < 0)
 			goto out;
 
@@ -8066,13 +8069,16 @@ static int nl80211_dump_station(struct sk_buff *skb,
 static int nl80211_get_station(struct sk_buff *skb, struct genl_info *info)
 {
 	struct cfg80211_registered_device *rdev = info->user_ptr[0];
-	struct net_device *dev = info->user_ptr[1];
+	struct wireless_dev *wdev = info->user_ptr[1];
 	struct station_info sinfo;
 	struct sk_buff *msg;
 	u8 *mac_addr = NULL;
 	int err, i;
 
 	memset(&sinfo, 0, sizeof(sinfo));
+
+	if (!wdev->netdev)
+		return -EINVAL;
 
 	if (!info->attrs[NL80211_ATTR_MAC])
 		return -EINVAL;
@@ -8090,7 +8096,7 @@ static int nl80211_get_station(struct sk_buff *skb, struct genl_info *info)
 		}
 	}
 
-	err = rdev_get_station(rdev, dev, mac_addr, &sinfo);
+	err = rdev_get_station(rdev, wdev, mac_addr, &sinfo);
 	if (err) {
 		cfg80211_sinfo_release_content(&sinfo);
 		return err;
@@ -8107,7 +8113,7 @@ static int nl80211_get_station(struct sk_buff *skb, struct genl_info *info)
 
 	if (nl80211_send_station(msg, NL80211_CMD_NEW_STATION,
 				 info->snd_portid, info->snd_seq, 0,
-				 rdev, dev, mac_addr, &sinfo, false) < 0) {
+				 rdev, wdev, mac_addr, &sinfo, false) < 0) {
 		nlmsg_free(msg);
 		return -ENOBUFS;
 	}
@@ -8473,12 +8479,16 @@ static int nl80211_parse_sta_txpower_setting(struct genl_info *info,
 static int nl80211_set_station(struct sk_buff *skb, struct genl_info *info)
 {
 	struct cfg80211_registered_device *rdev = info->user_ptr[0];
-	struct net_device *dev = info->user_ptr[1];
+	struct wireless_dev *wdev = info->user_ptr[1];
+	struct net_device *dev = wdev->netdev;
 	struct station_parameters params;
 	u8 *mac_addr;
 	int err;
 
 	memset(&params, 0, sizeof(params));
+
+	if (!dev)
+		return -EINVAL;
 
 	if (!rdev->ops->change_station)
 		return -EOPNOTSUPP;
@@ -8552,7 +8562,7 @@ static int nl80211_set_station(struct sk_buff *skb, struct genl_info *info)
 			nla_len(info->attrs[NL80211_ATTR_STA_EXT_CAPABILITY]);
 	}
 
-	if (parse_station_flags(info, dev->ieee80211_ptr->iftype, &params))
+	if (parse_station_flags(info, wdev->iftype, &params))
 		return -EINVAL;
 
 	if (info->attrs[NL80211_ATTR_STA_PLINK_ACTION])
@@ -8612,7 +8622,7 @@ static int nl80211_set_station(struct sk_buff *skb, struct genl_info *info)
 	if (IS_ERR(params.vlan))
 		return PTR_ERR(params.vlan);
 
-	switch (dev->ieee80211_ptr->iftype) {
+	switch (wdev->iftype) {
 	case NL80211_IFTYPE_AP:
 	case NL80211_IFTYPE_AP_VLAN:
 	case NL80211_IFTYPE_P2P_GO:
@@ -8627,7 +8637,7 @@ static int nl80211_set_station(struct sk_buff *skb, struct genl_info *info)
 	}
 
 	/* driver will call cfg80211_check_station_change() */
-	err = rdev_change_station(rdev, dev, mac_addr, &params);
+	err = rdev_change_station(rdev, wdev, mac_addr, &params);
 
  out_put_vlan:
 	dev_put(params.vlan);
@@ -8639,14 +8649,17 @@ static int nl80211_new_station(struct sk_buff *skb, struct genl_info *info)
 {
 	struct cfg80211_registered_device *rdev = info->user_ptr[0];
 	int err;
-	struct net_device *dev = info->user_ptr[1];
-	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct wireless_dev *wdev = info->user_ptr[1];
+	struct net_device *dev = wdev->netdev;
 	struct station_parameters params;
 	u8 *mac_addr = NULL;
 	u32 auth_assoc = BIT(NL80211_STA_FLAG_AUTHENTICATED) |
 			 BIT(NL80211_STA_FLAG_ASSOCIATED);
 
 	memset(&params, 0, sizeof(params));
+
+	if (!dev)
+		return -EINVAL;
 
 	if (!rdev->ops->add_station)
 		return -EOPNOTSUPP;
@@ -8697,7 +8710,7 @@ static int nl80211_new_station(struct sk_buff *skb, struct genl_info *info)
 		 * and is NOT supported for AP interface
 		 */
 		params.support_p2p_ps =
-			dev->ieee80211_ptr->iftype == NL80211_IFTYPE_P2P_GO;
+			wdev->iftype == NL80211_IFTYPE_P2P_GO;
 	}
 
 	if (info->attrs[NL80211_ATTR_PEER_AID])
@@ -8803,7 +8816,7 @@ static int nl80211_new_station(struct sk_buff *skb, struct genl_info *info)
 	if (err)
 		return err;
 
-	if (parse_station_flags(info, dev->ieee80211_ptr->iftype, &params))
+	if (parse_station_flags(info, wdev->iftype, &params))
 		return -EINVAL;
 
 	/* HT/VHT requires QoS, but if we don't have that just ignore HT/VHT
@@ -8831,7 +8844,7 @@ static int nl80211_new_station(struct sk_buff *skb, struct genl_info *info)
 	/* When you run into this, adjust the code below for the new flag */
 	BUILD_BUG_ON(NL80211_STA_FLAG_MAX != 8);
 
-	switch (dev->ieee80211_ptr->iftype) {
+	switch (wdev->iftype) {
 	case NL80211_IFTYPE_AP:
 	case NL80211_IFTYPE_AP_VLAN:
 	case NL80211_IFTYPE_P2P_GO:
@@ -8936,7 +8949,7 @@ static int nl80211_new_station(struct sk_buff *skb, struct genl_info *info)
 			goto out;
 		}
 	}
-	err = rdev_add_station(rdev, dev, mac_addr, &params);
+	err = rdev_add_station(rdev, wdev, mac_addr, &params);
 out:
 	dev_put(params.vlan);
 	return err;
@@ -8945,12 +8958,15 @@ out:
 static int nl80211_del_station(struct sk_buff *skb, struct genl_info *info)
 {
 	struct cfg80211_registered_device *rdev = info->user_ptr[0];
-	struct net_device *dev = info->user_ptr[1];
-	struct wireless_dev *wdev = dev->ieee80211_ptr;
+	struct wireless_dev *wdev = info->user_ptr[1];
+	struct net_device *dev = wdev->netdev;
 	struct station_del_parameters params;
 	int link_id = nl80211_link_id_or_invalid(info->attrs);
 
 	memset(&params, 0, sizeof(params));
+
+	if (!dev)
+		return -EINVAL;
 
 	if (info->attrs[NL80211_ATTR_MAC])
 		params.mac = nla_data(info->attrs[NL80211_ATTR_MAC]);
@@ -9007,7 +9023,7 @@ static int nl80211_del_station(struct sk_buff *skb, struct genl_info *info)
 
 	params.link_id = link_id;
 
-	return rdev_del_station(rdev, dev, &params);
+	return rdev_del_station(rdev, wdev, &params);
 }
 
 static int nl80211_send_mpath(struct sk_buff *msg, u32 portid, u32 seq,
@@ -14292,7 +14308,7 @@ static int cfg80211_cqm_rssi_update(struct cfg80211_registered_device *rdev,
 
 		mac_addr = wdev->links[0].client.current_bss->pub.bssid;
 
-		err = rdev_get_station(rdev, dev, mac_addr, &sinfo);
+		err = rdev_get_station(rdev, wdev, mac_addr, &sinfo);
 		if (err)
 			return err;
 
@@ -17532,7 +17548,7 @@ static int nl80211_probe_mesh_link(struct sk_buff *skb, struct genl_info *info)
 	    !ether_addr_equal(buf + ETH_ALEN, dev->dev_addr))
 		return -EINVAL;
 
-	err = rdev_get_station(rdev, dev, dest, &sinfo);
+	err = rdev_get_station(rdev, wdev, dest, &sinfo);
 	if (err)
 		return err;
 
@@ -18627,21 +18643,21 @@ static const struct genl_small_ops nl80211_small_ops[] = {
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.doit = nl80211_get_station,
 		.dumpit = nl80211_dump_station,
-		.internal_flags = IFLAGS(NL80211_FLAG_NEED_NETDEV),
+		.internal_flags = IFLAGS(NL80211_FLAG_NEED_WDEV),
 	},
 	{
 		.cmd = NL80211_CMD_SET_STATION,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.doit = nl80211_set_station,
 		.flags = GENL_UNS_ADMIN_PERM,
-		.internal_flags = IFLAGS(NL80211_FLAG_NEED_NETDEV_UP),
+		.internal_flags = IFLAGS(NL80211_FLAG_NEED_WDEV_UP),
 	},
 	{
 		.cmd = NL80211_CMD_NEW_STATION,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.doit = nl80211_new_station,
 		.flags = GENL_UNS_ADMIN_PERM,
-		.internal_flags = IFLAGS(NL80211_FLAG_NEED_NETDEV_UP),
+		.internal_flags = IFLAGS(NL80211_FLAG_NEED_WDEV_UP),
 	},
 	{
 		.cmd = NL80211_CMD_DEL_STATION,
@@ -18652,7 +18668,7 @@ static const struct genl_small_ops nl80211_small_ops[] = {
 		 * whether MAC address is passed or not. If MAC address is
 		 * passed, then even during MLO, link ID is not required.
 		 */
-		.internal_flags = IFLAGS(NL80211_FLAG_NEED_NETDEV_UP),
+		.internal_flags = IFLAGS(NL80211_FLAG_NEED_WDEV_UP),
 	},
 	{
 		.cmd = NL80211_CMD_GET_MPATH,
@@ -20595,21 +20611,21 @@ void cfg80211_tx_mgmt_expired(struct wireless_dev *wdev, u64 cookie,
 }
 EXPORT_SYMBOL(cfg80211_tx_mgmt_expired);
 
-void cfg80211_new_sta(struct net_device *dev, const u8 *mac_addr,
+void cfg80211_new_sta(struct wireless_dev *wdev, const u8 *mac_addr,
 		      struct station_info *sinfo, gfp_t gfp)
 {
-	struct wiphy *wiphy = dev->ieee80211_ptr->wiphy;
+	struct wiphy *wiphy = wdev->wiphy;
 	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wiphy);
 	struct sk_buff *msg;
 
-	trace_cfg80211_new_sta(dev, mac_addr, sinfo);
+	trace_cfg80211_new_sta(wdev, mac_addr, sinfo);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, gfp);
 	if (!msg)
 		return;
 
 	if (nl80211_send_station(msg, NL80211_CMD_NEW_STATION, 0, 0, 0,
-				 rdev, dev, mac_addr, sinfo, false) < 0) {
+				 rdev, wdev, mac_addr, sinfo, false) < 0) {
 		nlmsg_free(msg);
 		return;
 	}
@@ -20619,10 +20635,10 @@ void cfg80211_new_sta(struct net_device *dev, const u8 *mac_addr,
 }
 EXPORT_SYMBOL(cfg80211_new_sta);
 
-void cfg80211_del_sta_sinfo(struct net_device *dev, const u8 *mac_addr,
+void cfg80211_del_sta_sinfo(struct wireless_dev *wdev, const u8 *mac_addr,
 			    struct station_info *sinfo, gfp_t gfp)
 {
-	struct wiphy *wiphy = dev->ieee80211_ptr->wiphy;
+	struct wiphy *wiphy = wdev->wiphy;
 	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wiphy);
 	struct sk_buff *msg;
 	struct station_info empty_sinfo = {};
@@ -20630,7 +20646,7 @@ void cfg80211_del_sta_sinfo(struct net_device *dev, const u8 *mac_addr,
 	if (!sinfo)
 		sinfo = &empty_sinfo;
 
-	trace_cfg80211_del_sta(dev, mac_addr);
+	trace_cfg80211_del_sta(wdev, mac_addr);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, gfp);
 	if (!msg) {
@@ -20639,7 +20655,7 @@ void cfg80211_del_sta_sinfo(struct net_device *dev, const u8 *mac_addr,
 	}
 
 	if (nl80211_send_station(msg, NL80211_CMD_DEL_STATION, 0, 0, 0,
-				 rdev, dev, mac_addr, sinfo, false) < 0) {
+				 rdev, wdev, mac_addr, sinfo, false) < 0) {
 		nlmsg_free(msg);
 		return;
 	}

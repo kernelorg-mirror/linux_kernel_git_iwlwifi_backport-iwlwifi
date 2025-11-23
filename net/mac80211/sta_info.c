@@ -962,7 +962,7 @@ static int sta_info_insert_finish(struct sta_info *sta) __acquires(RCU)
 	}
 
 	sinfo->generation = local->sta_generation;
-	cfg80211_new_sta(sdata->dev, sta->sta.addr, sinfo, GFP_KERNEL);
+	cfg80211_new_sta(&sdata->wdev, sta->sta.addr, sinfo, GFP_KERNEL);
 	kfree(sinfo);
 
 	sta_dbg(sdata, "Inserted STA %pM\n", sta->sta.addr);
@@ -1544,7 +1544,7 @@ static void __sta_info_destroy_part2(struct sta_info *sta, bool recalc)
 	sinfo = kzalloc(sizeof(*sinfo), GFP_KERNEL);
 	if (sinfo)
 		sta_set_sinfo(sta, sinfo, true);
-	cfg80211_del_sta_sinfo(sdata->dev, sta->sta.addr, sinfo, GFP_KERNEL);
+	cfg80211_del_sta_sinfo(&sdata->wdev, sta->sta.addr, sinfo, GFP_KERNEL);
 	kfree(sinfo);
 
 	ieee80211_sta_debugfs_remove(sta);
