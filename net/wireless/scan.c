@@ -75,7 +75,11 @@ module_param(bss_entries_limit, int, 0644);
 MODULE_PARM_DESC(bss_entries_limit,
                  "limit to number of scan BSS entries (per wiphy, default 1000)");
 
-#define IEEE80211_SCAN_RESULT_EXPIRE	(CPTCFG_IWL_TIMEOUT_FACTOR * 30 * HZ)
+#ifdef CPTCFG_IWLWIFI_PRE_SILICON_SUPPORT
+#define IEEE80211_SCAN_RESULT_EXPIRE	(iwl_timeout_factor * 30 * HZ)
+#else
+#define IEEE80211_SCAN_RESULT_EXPIRE	(30 * HZ)
+#endif
 
 static void bss_free(struct cfg80211_internal_bss *bss)
 {

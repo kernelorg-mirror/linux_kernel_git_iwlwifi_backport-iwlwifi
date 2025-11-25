@@ -10634,16 +10634,17 @@ static int nl80211_trigger_scan(struct sk_buff *skb, struct genl_info *info)
 				    !cfg80211_wdev_channel_allowed(wdev, chan))
 					continue;
 
-#ifdef CPTCFG_IWLWIFI_FPGA
+#ifdef CPTCFG_IWLWIFI_PRE_SILICON_SUPPORT
 				/* Due to FPGA slowness, limit the default channels in scan request
 				 * as a WA for connection failure caused by scan timeout.
 				 */
-				if ((chan->band == NL80211_BAND_2GHZ &&
-				     chan->center_freq != 2412) ||
-				    (chan->band == NL80211_BAND_5GHZ &&
-				     chan->center_freq != 5180) ||
-				    (chan->band == NL80211_BAND_6GHZ &&
-				     chan->center_freq != 5975))
+				if (iwl_pre_si_fpga &&
+				    ((chan->band == NL80211_BAND_2GHZ &&
+				      chan->center_freq != 2412) ||
+				     (chan->band == NL80211_BAND_5GHZ &&
+				      chan->center_freq != 5180) ||
+				     (chan->band == NL80211_BAND_6GHZ &&
+				      chan->center_freq != 5975)))
 					continue;
 #endif
 				request->req.channels[i] = chan;
@@ -11083,16 +11084,17 @@ nl80211_parse_sched_scan(struct wiphy *wiphy, struct wireless_dev *wdev,
 				if (chan->flags & IEEE80211_CHAN_DISABLED)
 					continue;
 
-#ifdef CPTCFG_IWLWIFI_FPGA
+#ifdef CPTCFG_IWLWIFI_PRE_SILICON_SUPPORT
 				/* Due to FPGA slowness, limit the default channels in scan request
 				 * as a WA for connection failure caused by scan timeout.
 				 */
-				if ((chan->band == NL80211_BAND_2GHZ &&
-				     chan->center_freq != 2412) ||
-				    (chan->band == NL80211_BAND_5GHZ &&
-				     chan->center_freq != 5180) ||
-				    (chan->band == NL80211_BAND_6GHZ &&
-				     chan->center_freq != 5975))
+				if (iwl_pre_si_fpga &&
+				    ((chan->band == NL80211_BAND_2GHZ &&
+				      chan->center_freq != 2412) ||
+				     (chan->band == NL80211_BAND_5GHZ &&
+				      chan->center_freq != 5180) ||
+				     (chan->band == NL80211_BAND_6GHZ &&
+				      chan->center_freq != 5975)))
 					continue;
 #endif
 
