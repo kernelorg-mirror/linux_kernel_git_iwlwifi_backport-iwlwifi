@@ -5,7 +5,7 @@
  *
  * Copyright 2005-2006	Jiri Benc <jbenc@suse.cz>
  * Copyright 2006	Johannes Berg <johannes@sipsolutions.net>
- * Copyright (C) 2020-2021, 2023-2024 Intel Corporation
+ * Copyright (C) 2020-2021, 2023-2025 Intel Corporation
  */
 
 #include <linux/device.h>
@@ -97,7 +97,6 @@ static int wiphy_suspend(struct device *dev)
 	int ret = 0;
 
 	rdev->suspend_at = ktime_get_boottime_seconds();
-	trace_rdev_suspend_enter(&rdev->wiphy);
 
 	rtnl_lock();
 	wiphy_lock(&rdev->wiphy);
@@ -119,7 +118,6 @@ static int wiphy_suspend(struct device *dev)
 		if (ret == 0)
 			rdev->suspended = true;
 	}
-	trace_rdev_suspend_leave(&rdev->wiphy);
 	wiphy_unlock(&rdev->wiphy);
 	rtnl_unlock();
 
