@@ -4873,7 +4873,7 @@ struct mgmt_frame_regs {
  *	All other parameters must be ignored.
  * @nan_set_local_sched: configure the local schedule for NAN. The schedule
  *	consists of an array of %cfg80211_nan_channel and the schedule itself,
- *	in which each entry maps each time slot to the a channel on which the
+ *	in which each entry maps each time slot to the channel on which the
  *	radio should operate on.
  *
  * @set_multicast_to_unicast: configure multicast to unicast conversion for BSS
