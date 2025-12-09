@@ -28,13 +28,26 @@ int __alloc_bucket_spinlocks(spinlock_t **locks, unsigned int *lock_mask,
 	})
 #endif /* LINUX_VERSION_IS_LESS(4,19,0) */
 
-#if LINUX_VERSION_IS_LESS(6,14,0)
+
+#if LINUX_VERSION_IS_LESS(6,15,0)
+#include <linux/cleanup.h>
 DEFINE_LOCK_GUARD_1(spinlock_bh, spinlock_t,
 		    spin_lock_bh(_T->lock),
 		    spin_unlock_bh(_T->lock))
 
 DEFINE_LOCK_GUARD_1_COND(spinlock_bh, _try,
 			 spin_trylock_bh(_T->lock))
-#endif /* LINUX_VERSION_IS_LESS(6,14,0) */
+
+#endif /* LINUX_VERSION_IS_LESS(6,15,0) */
+
+#if LINUX_VERSION_IS_LESS(6,5,0)
+DEFINE_LOCK_GUARD_1(spinlock, spinlock_t,
+		    spin_lock(_T->lock),
+		    spin_unlock(_T->lock))
+
+DEFINE_LOCK_GUARD_1_COND(spinlock, _try,
+			 spin_trylock(_T->lock))
+
+#endif /* LINUX_VERSION_IS_LESS(6,5,0) */
 
 #endif /* __BACKPORT_SPINLOCK_H */
