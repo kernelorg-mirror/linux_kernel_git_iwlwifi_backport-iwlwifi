@@ -67,6 +67,15 @@ config IWLWIFI_LEDS
 	select MAC80211_LEDS
 	default y
 
+config IWLDVM
+	tristate "Intel Wireless WiFi DVM Firmware support"
+	depends on m
+	depends on MAC80211
+	help
+	  This is the driver that supports the DVM firmware. The list
+	  of the devices that use this firmware is available here:
+	  https://wireless.wiki.kernel.org/en/users/drivers/iwlwifi#firmware
+
 config IWLMVM
 	tristate "Intel Wireless WiFi MVM Firmware support"
 	depends on m

@@ -34,6 +34,8 @@ iwlwifi-$(CONFIG_PCI) += pcie/gen3/trans.o pcie/gen3/interrupts.o
 CFLAGS_pcie/drv.o += -Wno-override-init
 
 # combined MAC/RF configurations
+iwlwifi-$(CPTCFG_IWLDVM) += cfg/1000.o cfg/2000.o
+iwlwifi-$(CPTCFG_IWLDVM) += cfg/5000.o cfg/6000.o
 iwlwifi-$(CPTCFG_IWLMVM) += cfg/7000.o cfg/8000.o
 # MAC configurations
 iwlwifi-$(CPTCFG_IWLMVM) += cfg/9000.o cfg/22000.o
@@ -56,6 +58,7 @@ ccflags-y += -I$(src)
 subdir-ccflags-y += $(call cc-option,-Wimplicit-fallthrough)
 # for FreeBSD compatibility - they use most of our driver
 
+obj-$(CPTCFG_IWLDVM)	+= dvm/
 obj-$(CPTCFG_IWLMVM)	+= mvm/
 obj-$(CPTCFG_IWLMEI)	+= mei/
 obj-$(CPTCFG_IWLXVT)	+= xvt/

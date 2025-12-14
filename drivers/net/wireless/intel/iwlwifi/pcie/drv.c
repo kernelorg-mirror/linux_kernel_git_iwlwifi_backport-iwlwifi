@@ -33,6 +33,194 @@ extern int _invalid_type;
 
 /* Hardware specific file defines the PCI IDs table for that hardware module */
 VISIBLE_IF_IWLWIFI_KUNIT const struct pci_device_id iwl_hw_card_ids[] = {
+#if IS_ENABLED(CPTCFG_IWLDVM)
+	{IWL_PCI_DEVICE(0x4232, 0x1201, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1301, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1204, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1304, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1205, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1305, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1206, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1306, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1221, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1321, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1224, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1324, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1225, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1325, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1226, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4232, 0x1326, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4237, 0x1211, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4237, 0x1311, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4237, 0x1214, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4237, 0x1314, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4237, 0x1215, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4237, 0x1315, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4237, 0x1216, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4237, 0x1316, iwl5000_mac_cfg)}, /* Half Mini Card */
+
+/* 5300 Series WiFi */
+	{IWL_PCI_DEVICE(0x4235, 0x1021, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4235, 0x1121, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4235, 0x1024, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4235, 0x1124, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4235, 0x1001, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4235, 0x1101, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4235, 0x1004, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4235, 0x1104, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4236, 0x1011, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4236, 0x1111, iwl5000_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x4236, 0x1014, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x4236, 0x1114, iwl5000_mac_cfg)}, /* Half Mini Card */
+
+/* 5350 Series WiFi/WiMax */
+	{IWL_PCI_DEVICE(0x423A, 0x1001, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x423A, 0x1021, iwl5000_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x423B, 0x1011, iwl5000_mac_cfg)}, /* Mini Card */
+
+/* 5150 Series Wifi/WiMax */
+	{IWL_PCI_DEVICE(0x423C, 0x1201, iwl5150_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x423C, 0x1301, iwl5150_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x423C, 0x1206, iwl5150_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x423C, 0x1306, iwl5150_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x423C, 0x1221, iwl5150_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x423C, 0x1321, iwl5150_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x423C, 0x1326, iwl5150_mac_cfg)}, /* Half Mini Card */
+
+	{IWL_PCI_DEVICE(0x423D, 0x1211, iwl5150_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x423D, 0x1311, iwl5150_mac_cfg)}, /* Half Mini Card */
+	{IWL_PCI_DEVICE(0x423D, 0x1216, iwl5150_mac_cfg)}, /* Mini Card */
+	{IWL_PCI_DEVICE(0x423D, 0x1316, iwl5150_mac_cfg)}, /* Half Mini Card */
+
+/* 6x00 Series */
+	{IWL_PCI_DEVICE(0x422B, 0x1101, iwl6000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x422B, 0x1108, iwl6000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x422B, 0x1121, iwl6000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x422B, 0x1128, iwl6000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x422C, 0x1301, iwl6000i_mac_cfg)},
+	{IWL_PCI_DEVICE(0x422C, 0x1306, iwl6000i_mac_cfg)},
+	{IWL_PCI_DEVICE(0x422C, 0x1307, iwl6000i_mac_cfg)},
+	{IWL_PCI_DEVICE(0x422C, 0x1321, iwl6000i_mac_cfg)},
+	{IWL_PCI_DEVICE(0x422C, 0x1326, iwl6000i_mac_cfg)},
+	{IWL_PCI_DEVICE(0x4238, 0x1111, iwl6000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x4238, 0x1118, iwl6000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x4239, 0x1311, iwl6000i_mac_cfg)},
+	{IWL_PCI_DEVICE(0x4239, 0x1316, iwl6000i_mac_cfg)},
+
+/* 6x05 Series */
+	{IWL_PCI_DEVICE(0x0082, 0x1301, iwl6005_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0082, 0x1306, iwl6005_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0082, 0x1307, iwl6005_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0082, 0x1308, iwl6005_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0082, 0x1321, iwl6005_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0082, 0x1326, iwl6005_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0082, 0x1328, iwl6005_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0085, 0x1311, iwl6005_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0085, 0x1318, iwl6005_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0085, 0x1316, iwl6005_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0082, 0xC020, iwl6005_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0085, 0xC220, iwl6005_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0085, 0xC228, iwl6005_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0082, 0x4820, iwl6005_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0082, 0x1304, iwl6005_mac_cfg)},/* low 5GHz active */
+	{IWL_PCI_DEVICE(0x0082, 0x1305, iwl6005_mac_cfg)},/* high 5GHz active */
+
+/* 1030/6x30 Series */
+	{IWL_PCI_DEVICE(0x008A, 0x5305, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x008A, 0x5307, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x008A, 0x5325, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x008A, 0x5327, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x008B, 0x5315, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x008B, 0x5317, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0090, 0x5211, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0090, 0x5215, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0090, 0x5216, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0091, 0x5201, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0091, 0x5205, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0091, 0x5206, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0091, 0x5207, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0091, 0x5221, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0091, 0x5225, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0091, 0x5226, iwl6030_mac_cfg)},
+
+/* 6x50 WiFi/WiMax Series */
+	{IWL_PCI_DEVICE(0x0087, 0x1301, iwl6050_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0087, 0x1306, iwl6050_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0087, 0x1321, iwl6050_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0087, 0x1326, iwl6050_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0089, 0x1311, iwl6050_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0089, 0x1316, iwl6050_mac_cfg)},
+
+/* 6150 WiFi/WiMax Series */
+	{IWL_PCI_DEVICE(0x0885, 0x1305, iwl6150_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0885, 0x1307, iwl6150_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0885, 0x1325, iwl6150_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0885, 0x1327, iwl6150_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0886, 0x1315, iwl6150_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0886, 0x1317, iwl6150_mac_cfg)},
+
+/* 1000 Series WiFi */
+	{IWL_PCI_DEVICE(0x0083, 0x1205, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0083, 0x1305, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0083, 0x1225, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0083, 0x1325, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0084, 0x1215, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0084, 0x1315, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0083, 0x1206, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0083, 0x1306, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0083, 0x1226, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0083, 0x1326, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0084, 0x1216, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0084, 0x1316, iwl1000_mac_cfg)},
+
+/* 100 Series WiFi */
+	{IWL_PCI_DEVICE(0x08AE, 0x1005, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x08AE, 0x1007, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x08AF, 0x1015, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x08AF, 0x1017, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x08AE, 0x1025, iwl1000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x08AE, 0x1027, iwl1000_mac_cfg)},
+
+/* 130 Series WiFi */
+	{IWL_PCI_DEVICE(0x0896, 0x5005, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0896, 0x5007, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0897, 0x5015, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0897, 0x5017, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0896, 0x5025, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0896, 0x5027, iwl6030_mac_cfg)},
+
+/* 2x00 Series */
+	{IWL_PCI_DEVICE(0x0890, 0x4022, iwl2000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0891, 0x4222, iwl2000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0890, 0x4422, iwl2000_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0890, 0x4822, iwl2000_mac_cfg)},
+
+/* 2x30 Series */
+	{IWL_PCI_DEVICE(0x0887, 0x4062, iwl2030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0888, 0x4262, iwl2030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0887, 0x4462, iwl2030_mac_cfg)},
+
+/* 6x35 Series */
+	{IWL_PCI_DEVICE(0x088E, 0x4060, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x088E, 0x406A, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x088F, 0x4260, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x088F, 0x426A, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x088E, 0x4460, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x088E, 0x446A, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x088E, 0x4860, iwl6030_mac_cfg)},
+	{IWL_PCI_DEVICE(0x088F, 0x5260, iwl6030_mac_cfg)},
+
+/* 105 Series */
+	{IWL_PCI_DEVICE(0x0894, 0x0022, iwl105_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0895, 0x0222, iwl105_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0894, 0x0422, iwl105_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0894, 0x0822, iwl105_mac_cfg)},
+
+/* 135 Series */
+	{IWL_PCI_DEVICE(0x0892, 0x0062, iwl135_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0893, 0x0262, iwl135_mac_cfg)},
+	{IWL_PCI_DEVICE(0x0892, 0x0462, iwl135_mac_cfg)},
+#endif /* CPTCFG_IWLDVM */
 
 #if IS_ENABLED(CPTCFG_IWLMVM)
 /* 7260 Series */
@@ -402,6 +590,211 @@ EXPORT_SYMBOL_IF_IWLWIFI_KUNIT(iwl_hw_card_ids);
 #define BW_LIMITED		.match_bw_limit = 1, .bw_limit = 1
 
 VISIBLE_IF_IWLWIFI_KUNIT const struct iwl_dev_info iwl_dev_info_table[] = {
+#if IS_ENABLED(CPTCFG_IWLDVM)
+	IWL_DEV_INFO(iwl5100_n_cfg, iwl5100_agn_name,
+		     DEVICE(0x4232), SUBDEV_MASKED(0x1, 0xF)),
+	IWL_DEV_INFO(iwl5100_n_cfg, iwl5100_agn_name,
+		     DEVICE(0x4232), SUBDEV_MASKED(0x4, 0xF)),
+	IWL_DEV_INFO(iwl5100_n_cfg, iwl5100_bgn_name,
+		     DEVICE(0x4232), SUBDEV_MASKED(0x5, 0xF)),
+	IWL_DEV_INFO(iwl5100_abg_cfg, iwl5100_abg_name,
+		     DEVICE(0x4232), SUBDEV_MASKED(0x6, 0xF)),
+	IWL_DEV_INFO(iwl5100_n_cfg, iwl5100_agn_name,
+		     DEVICE(0x4237), SUBDEV_MASKED(0x1, 0xF)),
+	IWL_DEV_INFO(iwl5100_n_cfg, iwl5100_agn_name,
+		     DEVICE(0x4237), SUBDEV_MASKED(0x4, 0xF)),
+	IWL_DEV_INFO(iwl5100_n_cfg, iwl5100_bgn_name,
+		     DEVICE(0x4237), SUBDEV_MASKED(0x5, 0xF)),
+	IWL_DEV_INFO(iwl5100_abg_cfg, iwl5100_abg_name,
+		     DEVICE(0x4237), SUBDEV_MASKED(0x6, 0xF)),
+
+/* 5300 Series WiFi */
+	IWL_DEV_INFO(iwl5300_agn_cfg, iwl5300_agn_name,
+		     DEVICE(0x4235), SUBDEV_MASKED(0x1, 0xF)),
+	IWL_DEV_INFO(iwl5300_agn_cfg, iwl5300_agn_name,
+		     DEVICE(0x4235), SUBDEV_MASKED(0x4, 0xF)),
+	IWL_DEV_INFO(iwl5300_agn_cfg, iwl5300_agn_name,
+		     DEVICE(0x4236), SUBDEV_MASKED(0x1, 0xF)),
+	IWL_DEV_INFO(iwl5300_agn_cfg, iwl5300_agn_name,
+		     DEVICE(0x4236), SUBDEV_MASKED(0x4, 0xF)),
+
+/* 5350 Series WiFi/WiMax */
+	IWL_DEV_INFO(iwl5350_agn_cfg, iwl5350_agn_name,
+		     DEVICE(0x423A)),
+	IWL_DEV_INFO(iwl5350_agn_cfg, iwl5350_agn_name,
+		     DEVICE(0x423B)),
+
+/* 5150 Series Wifi/WiMax */
+	IWL_DEV_INFO(iwl5150_agn_cfg, iwl5150_agn_name,
+		     DEVICE(0x423C), SUBDEV_MASKED(0x1, 0xF)),
+	IWL_DEV_INFO(iwl5150_abg_cfg, iwl5150_abg_name,
+		     DEVICE(0x423C), SUBDEV_MASKED(0x6, 0xF)),
+
+	IWL_DEV_INFO(iwl5150_agn_cfg, iwl5150_agn_name,
+		     DEVICE(0x423D), SUBDEV_MASKED(0x1, 0xF)),
+	IWL_DEV_INFO(iwl5150_abg_cfg, iwl5150_abg_name,
+		     DEVICE(0x423D), SUBDEV_MASKED(0x6, 0xF)),
+
+/* 6x00 Series */
+	IWL_DEV_INFO(iwl6000_3agn_cfg, iwl6000_3agn_name,
+		     DEVICE(0x422B), SUBDEV_MASKED(0x1, 0xF)),
+	IWL_DEV_INFO(iwl6000_3agn_cfg, iwl6000_3agn_name,
+		     DEVICE(0x422B), SUBDEV_MASKED(0x8, 0xF)),
+	IWL_DEV_INFO(iwl6000i_2agn_cfg, iwl6000i_2agn_name,
+		     DEVICE(0x422C), SUBDEV_MASKED(0x1, 0xF)),
+	IWL_DEV_INFO(iwl6000i_non_n_cfg, iwl6000i_2abg_name,
+		     DEVICE(0x422C), SUBDEV_MASKED(0x6, 0xF)),
+	IWL_DEV_INFO(iwl6000i_non_n_cfg, iwl6000i_2bg_name,
+		     DEVICE(0x422C), SUBDEV_MASKED(0x7, 0xF)),
+	IWL_DEV_INFO(iwl6000_3agn_cfg, iwl6000_3agn_name,
+		     DEVICE(0x4238), SUBDEV(0x1111)),
+	IWL_DEV_INFO(iwl6000_3agn_cfg, iwl6000_3agn_name,
+		     DEVICE(0x4238), SUBDEV(0x1118)),
+	IWL_DEV_INFO(iwl6000i_2agn_cfg, iwl6000i_2agn_name,
+		     DEVICE(0x4239), SUBDEV(0x1311)),
+	IWL_DEV_INFO(iwl6000i_non_n_cfg, iwl6000i_2abg_name,
+		     DEVICE(0x4239), SUBDEV(0x1316)),
+
+/* 6x05 Series */
+	IWL_DEV_INFO(iwl6005_n_cfg, iwl6005_2agn_name,
+		     DEVICE(0x0082), SUBDEV_MASKED(0x1, 0xF)),
+	IWL_DEV_INFO(iwl6005_non_n_cfg, iwl6005_2abg_name,
+		     DEVICE(0x0082), SUBDEV_MASKED(0x6, 0xF)),
+	IWL_DEV_INFO(iwl6005_non_n_cfg, iwl6005_2bg_name,
+		     DEVICE(0x0082), SUBDEV_MASKED(0x7, 0xF)),
+	IWL_DEV_INFO(iwl6005_n_cfg, iwl6005_2agn_name,
+		     DEVICE(0x0082), SUBDEV_MASKED(0x8, 0xF)),
+
+	IWL_DEV_INFO(iwl6005_n_cfg, iwl6005_2agn_name,
+		     DEVICE(0x0085), SUBDEV_MASKED(0x1, 0xF)),
+	IWL_DEV_INFO(iwl6005_n_cfg, iwl6005_2agn_name,
+		     DEVICE(0x0085), SUBDEV_MASKED(0x8, 0xF)),
+	IWL_DEV_INFO(iwl6005_non_n_cfg, iwl6005_2abg_name,
+		     DEVICE(0x0085), SUBDEV_MASKED(0x6, 0xF)),
+
+	IWL_DEV_INFO(iwl6005_n_cfg, iwl6005_2agn_sff_name,
+		     DEVICE(0x0082), SUBDEV_MASKED(0xC000, 0xF000)),
+	IWL_DEV_INFO(iwl6005_n_cfg, iwl6005_2agn_sff_name,
+		     DEVICE(0x0085), SUBDEV_MASKED(0xC000, 0xF000)),
+	IWL_DEV_INFO(iwl6005_n_cfg, iwl6005_2agn_d_name,
+		     DEVICE(0x0082), SUBDEV(0x4820)),
+	IWL_DEV_INFO(iwl6005_n_cfg, iwl6005_2agn_mow1_name,
+		     DEVICE(0x0082), SUBDEV(0x1304)),/* low 5GHz active */
+	IWL_DEV_INFO(iwl6005_n_cfg, iwl6005_2agn_mow2_name,
+		     DEVICE(0x0082), SUBDEV(0x1305)),/* high 5GHz active */
+
+/* 6x30 Series */
+	IWL_DEV_INFO(iwl6030_n_cfg, iwl1030_bgn_name,
+		     DEVICE(0x008A), SUBDEV_MASKED(0x5, 0xF)),
+	IWL_DEV_INFO(iwl6030_non_n_cfg, iwl1030_bg_name,
+		     DEVICE(0x008A), SUBDEV_MASKED(0x7, 0xF)),
+	IWL_DEV_INFO(iwl6030_n_cfg, iwl1030_bgn_name,
+		     DEVICE(0x008B), SUBDEV(0x5315)),
+	IWL_DEV_INFO(iwl6030_non_n_cfg, iwl1030_bg_name,
+		     DEVICE(0x008B), SUBDEV(0x5317)),
+	IWL_DEV_INFO(iwl6030_n_cfg, iwl6030_2agn_name,
+		     DEVICE(0x0090), SUBDEV(0x5211)),
+	IWL_DEV_INFO(iwl6030_n_cfg, iwl6030_2bgn_name,
+		     DEVICE(0x0090), SUBDEV(0x5215)),
+	IWL_DEV_INFO(iwl6030_non_n_cfg, iwl6030_2abg_name,
+		     DEVICE(0x0090), SUBDEV(0x5216)),
+	IWL_DEV_INFO(iwl6030_n_cfg, iwl6030_2agn_name,
+		     DEVICE(0x0091), SUBDEV_MASKED(0x1, 0xF)),
+	IWL_DEV_INFO(iwl6030_n_cfg, iwl6030_2bgn_name,
+		     DEVICE(0x0091), SUBDEV_MASKED(0x5, 0xF)),
+	IWL_DEV_INFO(iwl6030_non_n_cfg, iwl6030_2abg_name,
+		     DEVICE(0x0091), SUBDEV_MASKED(0x6, 0xF)),
+	IWL_DEV_INFO(iwl6030_non_n_cfg, iwl6030_2bg_name,
+		     DEVICE(0x0091), SUBDEV(0x5207)),
+
+/* 6x50 WiFi/WiMax Series */
+	IWL_DEV_INFO(iwl6050_2agn_cfg, iwl6050_2agn_name,
+		     DEVICE(0x0087), SUBDEV_MASKED(0x1, 0xF)),
+	IWL_DEV_INFO(iwl6050_2abg_cfg, iwl6050_2abg_name,
+		     DEVICE(0x0087), SUBDEV_MASKED(0x6, 0xF)),
+	IWL_DEV_INFO(iwl6050_2agn_cfg, iwl6050_2agn_name,
+		     DEVICE(0x0089), SUBDEV(0x1311)),
+	IWL_DEV_INFO(iwl6050_2abg_cfg, iwl6050_2abg_name,
+		     DEVICE(0x0089), SUBDEV(0x1316)),
+
+/* 6150 WiFi/WiMax Series */
+	IWL_DEV_INFO(iwl6150_bgn_cfg, iwl6150_bgn_name,
+		     DEVICE(0x0885), SUBDEV_MASKED(0x5, 0xF)),
+	IWL_DEV_INFO(iwl6150_bg_cfg, iwl6150_bg_name,
+		     DEVICE(0x0885), SUBDEV_MASKED(0x7, 0xF)),
+	IWL_DEV_INFO(iwl6150_bgn_cfg, iwl6150_bgn_name,
+		     DEVICE(0x0886), SUBDEV(0x1315)),
+	IWL_DEV_INFO(iwl6150_bg_cfg, iwl6150_bg_name,
+		     DEVICE(0x0886), SUBDEV(0x1317)),
+
+/* 1000 Series WiFi */
+	IWL_DEV_INFO(iwl1000_bgn_cfg, iwl1000_bgn_name,
+		     DEVICE(0x0083), SUBDEV_MASKED(0x5, 0xF)),
+	IWL_DEV_INFO(iwl1000_bg_cfg, iwl1000_bg_name,
+		     DEVICE(0x0083), SUBDEV_MASKED(0x6, 0xF)),
+	IWL_DEV_INFO(iwl1000_bgn_cfg, iwl1000_bgn_name,
+		     DEVICE(0x0084), SUBDEV_MASKED(0x5, 0xF)),
+	IWL_DEV_INFO(iwl1000_bg_cfg, iwl1000_bg_name,
+		     DEVICE(0x0084), SUBDEV_MASKED(0x6, 0xF)),
+
+/* 100 Series WiFi */
+	IWL_DEV_INFO(iwl100_bgn_cfg, iwl100_bgn_name,
+		     DEVICE(0x08AE), SUBDEV_MASKED(0x5, 0xF)),
+	IWL_DEV_INFO(iwl100_bg_cfg, iwl100_bg_name,
+		     DEVICE(0x08AE), SUBDEV_MASKED(0x7, 0xF)),
+	IWL_DEV_INFO(iwl100_bgn_cfg, iwl100_bgn_name,
+		     DEVICE(0x08AF), SUBDEV(0x1015)),
+	IWL_DEV_INFO(iwl100_bg_cfg, iwl100_bg_name,
+		     DEVICE(0x08AF), SUBDEV(0x1017)),
+
+/* 130 Series WiFi */
+	IWL_DEV_INFO(iwl130_bgn_cfg, iwl130_bgn_name,
+		     DEVICE(0x0896), SUBDEV_MASKED(0x5, 0xF)),
+	IWL_DEV_INFO(iwl130_bg_cfg, iwl130_bg_name,
+		     DEVICE(0x0896), SUBDEV_MASKED(0x7, 0xF)),
+	IWL_DEV_INFO(iwl130_bgn_cfg, iwl130_bgn_name,
+		     DEVICE(0x0897), SUBDEV(0x5015)),
+	IWL_DEV_INFO(iwl130_bg_cfg, iwl130_bg_name,
+		     DEVICE(0x0897), SUBDEV(0x5017)),
+
+/* 2x00 Series */
+	IWL_DEV_INFO(iwl2000_2bgn_cfg, iwl2000_2bgn_name,
+		     DEVICE(0x0890), SUBDEV(0x4022)),
+	IWL_DEV_INFO(iwl2000_2bgn_cfg, iwl2000_2bgn_name,
+		     DEVICE(0x0891), SUBDEV(0x4222)),
+	IWL_DEV_INFO(iwl2000_2bgn_cfg, iwl2000_2bgn_name,
+		     DEVICE(0x0890), SUBDEV(0x4422)),
+	IWL_DEV_INFO(iwl2000_2bgn_cfg, iwl2000_2bgn_d_name,
+		     DEVICE(0x0890), SUBDEV(0x4822)),
+
+/* 2x30 Series */
+	IWL_DEV_INFO(iwl2030_2bgn_cfg, iwl2030_2bgn_name,
+		     DEVICE(0x0887)),
+	IWL_DEV_INFO(iwl2030_2bgn_cfg, iwl2030_2bgn_name,
+		     DEVICE(0x0888), SUBDEV(0x4262)),
+
+/* 6x35 Series */
+	IWL_DEV_INFO(iwl6035_2agn_cfg, iwl6035_2agn_name,
+		     DEVICE(0x088E), SUBDEV_MASKED(0x0, 0xF)),
+	IWL_DEV_INFO(iwl6035_2agn_cfg, iwl6035_2agn_sff_name,
+		     DEVICE(0x088E), SUBDEV_MASKED(0xA, 0xF)),
+	IWL_DEV_INFO(iwl6035_2agn_cfg, iwl6035_2agn_name,
+		     DEVICE(0x088F), SUBDEV_MASKED(0x0, 0xF)),
+	IWL_DEV_INFO(iwl6035_2agn_cfg, iwl6035_2agn_sff_name,
+		     DEVICE(0x088F), SUBDEV_MASKED(0xA, 0xF)),
+
+/* 105 Series */
+	IWL_DEV_INFO(iwl105_bgn_cfg, iwl105_bgn_name,
+		     DEVICE(0x0894)),
+	IWL_DEV_INFO(iwl105_bgn_cfg, iwl105_bgn_name,
+		     DEVICE(0x0895), SUBDEV(0x0222)),
+
+/* 135 Series */
+	IWL_DEV_INFO(iwl135_bgn_cfg, iwl135_bgn_name,
+		     DEVICE(0x0892)),
+	IWL_DEV_INFO(iwl135_bgn_cfg, iwl135_bgn_name,
+		     DEVICE(0x0893), SUBDEV(0x0262)),
+#endif /* CPTCFG_IWLDVM */
 
 #if IS_ENABLED(CPTCFG_IWLMVM)
 /* 7260 Series */

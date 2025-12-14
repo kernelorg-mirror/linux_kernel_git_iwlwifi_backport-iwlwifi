@@ -694,6 +694,37 @@ extern const char iwl_bn201_name[];
 extern const char iwl_bn203_name[];
 extern const char iwl_be223_name[];
 extern const char iwl_ax221_name[];
+#if IS_ENABLED(CPTCFG_IWLDVM)
+extern const struct iwl_rf_cfg iwl5300_agn_cfg;
+extern const struct iwl_rf_cfg iwl5350_agn_cfg;
+extern const struct iwl_rf_cfg iwl5100_n_cfg;
+extern const struct iwl_rf_cfg iwl5100_abg_cfg;
+extern const struct iwl_rf_cfg iwl5150_agn_cfg;
+extern const struct iwl_rf_cfg iwl5150_abg_cfg;
+extern const struct iwl_rf_cfg iwl6005_non_n_cfg;
+extern const struct iwl_rf_cfg iwl6005_n_cfg;
+extern const struct iwl_rf_cfg iwl6030_n_cfg;
+extern const struct iwl_rf_cfg iwl6030_non_n_cfg;
+extern const struct iwl_rf_cfg iwl6000i_2agn_cfg;
+extern const struct iwl_rf_cfg iwl6000i_non_n_cfg;
+extern const struct iwl_rf_cfg iwl6000i_non_n_cfg;
+extern const struct iwl_rf_cfg iwl6000_3agn_cfg;
+extern const struct iwl_rf_cfg iwl6050_2agn_cfg;
+extern const struct iwl_rf_cfg iwl6050_2abg_cfg;
+extern const struct iwl_rf_cfg iwl6150_bgn_cfg;
+extern const struct iwl_rf_cfg iwl6150_bg_cfg;
+extern const struct iwl_rf_cfg iwl1000_bgn_cfg;
+extern const struct iwl_rf_cfg iwl1000_bg_cfg;
+extern const struct iwl_rf_cfg iwl100_bgn_cfg;
+extern const struct iwl_rf_cfg iwl100_bg_cfg;
+extern const struct iwl_rf_cfg iwl130_bgn_cfg;
+extern const struct iwl_rf_cfg iwl130_bg_cfg;
+extern const struct iwl_rf_cfg iwl2000_2bgn_cfg;
+extern const struct iwl_rf_cfg iwl2030_2bgn_cfg;
+extern const struct iwl_rf_cfg iwl6035_2agn_cfg;
+extern const struct iwl_rf_cfg iwl105_bgn_cfg;
+extern const struct iwl_rf_cfg iwl135_bgn_cfg;
+#endif /* CPTCFG_IWLDVM */
 #if IS_ENABLED(CPTCFG_IWLMVM)
 extern const struct iwl_rf_cfg iwl7260_cfg;
 extern const struct iwl_rf_cfg iwl7260_high_temp_cfg;
