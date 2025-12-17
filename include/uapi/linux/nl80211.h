@@ -2996,6 +2996,8 @@ enum nl80211_commands {
  *	specific time slots. All of the channel definitions should be mutually
  *	incompatible. The number of channels should fit the current
  *	configuration of channels and the possible interface combinations.
+ *	If an existing NAN channel is changed but the chandef isn't, the
+ *	channel entry must also remain unchanged.
  * @NL80211_ATTR_NAN_CHANNEL_ENTRY: a byte array of 6 bytes. contains the
  *	Channel Entry as defined in Wi-Fi Aware (TM) 4.0 specification Table
  *	100 (Channel Entry format for the NAN Availability attribute).
