@@ -397,8 +397,8 @@ static void iwl_mac_hw_set_wiphy(struct iwl_mld *mld)
 		hw->wiphy->nan_capa.flags = WIPHY_NAN_FLAGS_CONFIGURABLE_SYNC |
 					    WIPHY_NAN_FLAGS_USERSPACE_DE;
 
-		hw->wiphy->nan_capa.op_mode = NAN_OP_MODE_PHY_MODE_MASK |
-					      NAN_OP_MODE_80P80MHZ |
+		hw->wiphy->nan_capa.op_mode = NAN_OP_MODE_PHY_MODE_VHT |
+					      NAN_OP_MODE_PHY_MODE_HE |
 					      NAN_OP_MODE_160MHZ;
 
 		/* Support 2 antenna's for Tx and Rx */
