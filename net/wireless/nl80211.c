@@ -7259,9 +7259,11 @@ static int parse_station_flags(struct genl_info *info,
 
 		if ((iftype == NL80211_IFTYPE_NAN ||
 		     iftype == NL80211_IFTYPE_NAN_DATA) &&
-		    params->sta_flags_mask & ~(BIT(NL80211_STA_FLAG_AUTHENTICATED) |
-					       BIT(NL80211_STA_FLAG_ASSOCIATED) |
-					       BIT(NL80211_STA_FLAG_AUTHORIZED)))
+		    params->sta_flags_mask &
+		    ~(BIT(NL80211_STA_FLAG_AUTHENTICATED) |
+		      BIT(NL80211_STA_FLAG_ASSOCIATED) |
+		      BIT(NL80211_STA_FLAG_AUTHORIZED) |
+		      BIT(NL80211_STA_FLAG_MFP)))
 				return -EINVAL;
 
 		/* WME is always used in NAN */
@@ -8418,7 +8420,9 @@ int cfg80211_check_station_change(struct wiphy *wiphy,
 		break;
 	case CFG80211_STA_NAN_MGMT:
 	case CFG80211_STA_NAN_DATA:
-		if (params->sta_flags_mask & ~BIT(NL80211_STA_FLAG_AUTHORIZED))
+		if (params->sta_flags_mask &
+		    ~(BIT(NL80211_STA_FLAG_AUTHORIZED) |
+		      BIT(NL80211_STA_FLAG_MFP)))
 			return -EINVAL;
 		break;
 	}
