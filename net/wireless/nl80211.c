@@ -6656,15 +6656,6 @@ static int nl80211_calculate_ap_params(struct cfg80211_ap_settings *params)
 			return -EINVAL;
 	}
 
-	cap = cfg80211_find_ext_elem(WLAN_EID_EXT_UHR_CAPA, ies, ies_len);
-	if (cap) {
-		if (!cap->datalen)
-			return -EINVAL;
-		params->uhr_capa = (void *)(cap->data + 1);
-		if (!ieee80211_uhr_capa_size_ok((const u8 *)params->uhr_capa,
-						cap->datalen - 1))
-			return -EINVAL;
-	}
 	cap = cfg80211_find_ext_elem(WLAN_EID_EXT_UHR_OPER, ies, ies_len);
 	if (cap) {
 		if (!cap->datalen)
@@ -6798,8 +6789,7 @@ static int nl80211_validate_ap_phy_operation(struct cfg80211_ap_settings *params
 	    (channel->flags & IEEE80211_CHAN_NO_EHT))
 		return -EOPNOTSUPP;
 
-	if ((params->uhr_capa || params->uhr_oper) &&
-	    (channel->flags & IEEE80211_CHAN_NO_UHR))
+	if (params->uhr_oper && (channel->flags & IEEE80211_CHAN_NO_UHR))
 		return -EOPNOTSUPP;
 
 	return 0;
