@@ -1618,7 +1618,7 @@ static int ieee80211_start_ap(struct wiphy *wiphy, struct net_device *dev,
 		link_conf->eht_mu_beamformer = false;
 	}
 
-	if (params->uhr_capa) {
+	if (params->uhr_oper) {
 		if (!link_conf->eht_support)
 			return -EOPNOTSUPP;
 
