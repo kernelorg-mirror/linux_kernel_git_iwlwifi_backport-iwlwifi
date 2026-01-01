@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * mac80211_hwsim_nan - NAN software simulation for mac80211_hwsim
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  */
 
 #include <net/cfg80211.h>
@@ -176,6 +176,9 @@ void mac80211_hwsim_nan_rx(struct ieee80211_hw *hw,
 		return;
 
 	u8 *nan_defragmented __free(kfree) = kzalloc(data_len, GFP_ATOMIC);
+	if (!nan_defragmented)
+		return;
+
 	data_len = cfg80211_defragment_element(nan_elem,
 					       mgmt->u.beacon.variable,
 					       data_len,
@@ -421,7 +424,7 @@ void mac80211_hwsim_nan_rx(struct ieee80211_hw *hw,
 	}
 
 	/* We are anchor master */
-	if (is_same_cluster && is_sync_beacon &&
+	if (is_same_cluster && is_sync_beacon && ami &&
 	    data->nan.current_ami.hop_count == 0) {
 		WARN_ON_ONCE(!ether_addr_equal(data->nan.current_ami.master_addr,
 					       data->nan.device_vif->addr));
