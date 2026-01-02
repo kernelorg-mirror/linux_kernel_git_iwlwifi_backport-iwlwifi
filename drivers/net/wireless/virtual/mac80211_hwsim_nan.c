@@ -674,6 +674,7 @@ mac80211_hwsim_nan_slot_timer(struct hrtimer *timer)
 	u8 slot = hwsim_nan_slot_from_tsf(tsf);
 	bool dwst_of_dw0 = false;
 	bool dw_end = false;
+	bool tx_sync_beacon;
 
 	if (!data->nan.device_vif)
 		return HRTIMER_NORESTART;
@@ -693,6 +694,10 @@ mac80211_hwsim_nan_slot_timer(struct hrtimer *timer)
 
 		if (slot == SLOT_24GHZ_DW)
 			data->nan.tsf_adjusted = false;
+
+		tx_sync_beacon =
+			data->nan.phase != MAC80211_HWSIM_NAN_PHASE_SCAN &&
+			data->nan.role != MAC80211_HWSIM_NAN_ROLE_NON_SYNC;
 	}
 
 	switch (slot) {
@@ -729,9 +734,7 @@ mac80211_hwsim_nan_slot_timer(struct hrtimer *timer)
 	}
 
 	/* TODO: This does not implement DW contention mitigation */
-	if (beacon_sync_chan &&
-	    data->nan.phase != MAC80211_HWSIM_NAN_PHASE_SCAN &&
-	    data->nan.role != MAC80211_HWSIM_NAN_ROLE_NON_SYNC)
+	if (beacon_sync_chan && tx_sync_beacon)
 		mac80211_hwsim_nan_tx_beacon(data, false, beacon_sync_chan);
 
 	if (dw_end)
@@ -808,16 +811,19 @@ int mac80211_hwsim_nan_start(struct ieee80211_hw *hw,
 	data->nan.device_vif = vif;
 	data->nan.bands = conf->bands;
 
-	/* Start in the "scan" phase and stay there for a little bit */
-	data->nan.phase = MAC80211_HWSIM_NAN_PHASE_SCAN;
-	data->nan.random_factor_valid_dwst = 1;
-	data->nan.random_factor = 0;
-	data->nan.master_pref = conf->master_pref;
-	data->nan.role = MAC80211_HWSIM_NAN_ROLE_MASTER;
-	memset(&data->nan.current_ami, 0, sizeof(data->nan.current_ami));
-	memset(&data->nan.last_ami, 0, sizeof(data->nan.last_ami));
-	data->nan.current_ami.master_rank =
-		cpu_to_le64(hwsim_nan_get_master_rank(data));
+	scoped_guard(spinlock_bh, &data->nan.state_lock) {
+		/* Start in the "scan" phase and stay there for a little bit */
+		data->nan.phase = MAC80211_HWSIM_NAN_PHASE_SCAN;
+		data->nan.random_factor_valid_dwst = 1;
+		data->nan.random_factor = 0;
+		data->nan.master_pref = conf->master_pref;
+		data->nan.role = MAC80211_HWSIM_NAN_ROLE_MASTER;
+		memset(&data->nan.current_ami, 0,
+		       sizeof(data->nan.current_ami));
+		memset(&data->nan.last_ami, 0, sizeof(data->nan.last_ami));
+		data->nan.current_ami.master_rank =
+			cpu_to_le64(hwsim_nan_get_master_rank(data));
+	}
 
 	/* Just run this "soon" and start in a random schedule position */
 	hrtimer_start(&data->nan.slot_timer,
