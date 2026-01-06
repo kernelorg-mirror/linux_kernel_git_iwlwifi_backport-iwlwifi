@@ -2124,8 +2124,14 @@ static int sta_link_apply_parameters(struct ieee80211_local *local,
 	if (!link || !link_sta)
 		return -EINVAL;
 
-	if (sdata->vif.type == NL80211_IFTYPE_NAN ||
-	    sdata->vif.type == NL80211_IFTYPE_NAN_DATA) {
+	/*
+	 * We should not have any changes in NDI station, its capabilities are
+	 * copied from the NMI sta
+	 */
+	if (WARN_ON(sdata->vif.type == NL80211_IFTYPE_NAN_DATA))
+		return -EINVAL;
+
+	if (sdata->vif.type == NL80211_IFTYPE_NAN) {
 		own_ht_cap = &local->hw.wiphy->nan_capa.phy.ht;
 		own_vht_cap = &local->hw.wiphy->nan_capa.phy.vht;
 		own_he_cap = &local->hw.wiphy->nan_capa.phy.he;
@@ -2160,8 +2166,7 @@ static int sta_link_apply_parameters(struct ieee80211_local *local,
 			return ret;
 	}
 
-	if (sdata->vif.type == NL80211_IFTYPE_NAN ||
-	    sdata->vif.type == NL80211_IFTYPE_NAN_DATA) {
+	if (sdata->vif.type == NL80211_IFTYPE_NAN) {
 		static const u8 all_ofdm_rates[] = {
 			0x0c, 0x12, 0x18, 0x24, 0x30, 0x48, 0x60, 0x6c
 		};
@@ -2412,6 +2417,9 @@ static int sta_apply_parameters(struct ieee80211_local *local,
 		sta->deflink.pub->ht_cap = nmi_sta->deflink.pub->ht_cap;
 		sta->deflink.pub->vht_cap = nmi_sta->deflink.pub->vht_cap;
 		sta->deflink.pub->he_cap = nmi_sta->deflink.pub->he_cap;
+		memcpy(&sta->deflink.pub->supp_rates,
+		       &nmi_sta->deflink.pub->supp_rates,
+		       sizeof(sta->deflink.pub->supp_rates));
 	}
 
 	/* set the STA state after all sta info from usermode has been set */
