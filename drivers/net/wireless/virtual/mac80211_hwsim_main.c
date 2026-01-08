@@ -2314,6 +2314,7 @@ mac80211_hwsim_beacon(struct hrtimer *timer)
 		container_of(link_data, struct mac80211_hwsim_data,
 			     link_data[link_data->link_id]);
 	struct ieee80211_hw *hw = data->hw;
+	u32 remainder;
 	u64 tsf_now;
 	u64 tbtt;
 
@@ -2331,7 +2332,8 @@ mac80211_hwsim_beacon(struct hrtimer *timer)
 	tbtt = tsf_now + link_data->beacon_int;
 
 	/* Round TBTT down to the correct time */
-	tbtt = tbtt - tbtt % link_data->beacon_int;
+	div_u64_rem(tbtt, link_data->beacon_int, &remainder);
+	tbtt = tbtt - remainder;
 
 	hrtimer_set_expires(&link_data->beacon_timer,
 			    mac80211_hwsim_tsf_to_boottime(data, tbtt));
