@@ -862,6 +862,7 @@ mac80211_hwsim_nan_discovery_beacon_timer(struct hrtimer *timer)
 	struct mac80211_hwsim_data *data =
 		container_of(timer, struct mac80211_hwsim_data,
 			     nan.discovery_beacon_timer);
+	u32 remainder;
 	u64 tsf_now;
 	u64 tbtt;
 
@@ -889,7 +890,8 @@ mac80211_hwsim_nan_discovery_beacon_timer(struct hrtimer *timer)
 	tbtt = tsf_now + ieee80211_tu_to_usec(100);
 
 	/* Round TBTT down to the correct time */
-	tbtt = tbtt - tbtt % ieee80211_tu_to_usec(100);
+	div_u64_rem(tbtt, ieee80211_tu_to_usec(100), &remainder);
+	tbtt = tbtt - remainder;
 
 	hrtimer_set_expires(&data->nan.discovery_beacon_timer,
 			    mac80211_hwsim_tsf_to_boottime(data, tbtt));
