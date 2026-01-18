@@ -3770,6 +3770,9 @@ static int _nl80211_parse_chandef(struct cfg80211_registered_device *rdev,
 		return -EINVAL;
 	}
 
+	if (cfg80211_chandef_is_s1g(chandef))
+		chandef->width = NL80211_CHAN_WIDTH_1;
+
 	if (attrs[NL80211_ATTR_WIPHY_CHANNEL_TYPE]) {
 		enum nl80211_channel_type chantype;
 
@@ -4404,6 +4407,9 @@ int nl80211_send_chandef(struct sk_buff *msg, const struct cfg80211_chan_def *ch
 		return -ENOBUFS;
 	if (chandef->punctured &&
 	    nla_put_u32(msg, NL80211_ATTR_PUNCT_BITMAP, chandef->punctured))
+		return -ENOBUFS;
+	if (chandef->s1g_primary_2mhz &&
+	    nla_put_flag(msg, NL80211_ATTR_S1G_PRIMARY_2MHZ))
 		return -ENOBUFS;
 
 	return 0;

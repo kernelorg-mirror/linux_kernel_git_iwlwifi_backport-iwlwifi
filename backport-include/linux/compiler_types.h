@@ -6,6 +6,10 @@
 #define __has_builtin(x) (0)
 #endif
 
+#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 202311L
+# define auto __auto_type
+#endif
+
 /*
  * When the size of an allocated object is needed, use the best available
  * mechanism to find it. (For cases where sizeof() cannot be used.)

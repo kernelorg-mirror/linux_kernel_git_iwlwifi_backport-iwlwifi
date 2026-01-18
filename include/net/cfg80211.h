@@ -827,8 +827,7 @@ struct vif_params {
  * @key: key material
  * @key_len: length of key material
  * @cipher: cipher suite selector
- * @seq: sequence counter (IV/PN) for TKIP and CCMP keys, only used
- *	with the get_key() callback, must be in little endian,
+ * @seq: sequence counter (IV/PN), must be in little endian,
  *	length given by @seq_len.
  * @seq_len: length of @seq.
  * @vlan_id: vlan_id for VLAN group key (if nonzero)
@@ -1016,7 +1015,8 @@ cfg80211_chandef_identical(const struct cfg80211_chan_def *chandef1,
 		chandef1->center_freq1 == chandef2->center_freq1 &&
 		chandef1->freq1_offset == chandef2->freq1_offset &&
 		chandef1->center_freq2 == chandef2->center_freq2 &&
-		chandef1->punctured == chandef2->punctured);
+		chandef1->punctured == chandef2->punctured &&
+		chandef1->s1g_primary_2mhz == chandef2->s1g_primary_2mhz);
 }
 
 /**
@@ -1055,6 +1055,7 @@ cfg80211_chandef_is_s1g(const struct cfg80211_chan_def *chandef)
 const struct cfg80211_chan_def *
 cfg80211_chandef_compatible(const struct cfg80211_chan_def *chandef1,
 			    const struct cfg80211_chan_def *chandef2);
+
 
 /**
  * nl80211_chan_width_to_mhz - get the channel width in MHz
@@ -5946,9 +5947,13 @@ struct wiphy_iftype_akm_suites {
  *
  * @rts_threshold: RTS threshold (dot11RTSThreshold);
  *	-1 (default) = RTS/CTS disabled
+ * @radio_debugfsdir: Pointer to debugfs directory containing the radio-
+ *	specific parameters.
+ *	NULL (default) = Debugfs directory not created
  */
 struct wiphy_radio_cfg {
 	u32 rts_threshold;
+	struct dentry *radio_debugfsdir;
 };
 
 /**
@@ -6826,7 +6831,7 @@ void wiphy_hrtimer_work_queue(struct wiphy *wiphy,
 /**
  * wiphy_hrtimer_work_cancel - cancel previously queued hrtimer work
  * @wiphy: the wiphy, for debug purposes
- * @hrwork: the hrtimer work to cancel
+ * @hrtimer: the hrtimer work to cancel
  *
  * Cancel the work *without* waiting for it, this assumes being
  * called under the wiphy mutex acquired by wiphy_lock().
@@ -7238,6 +7243,19 @@ static inline bool cfg80211_channel_is_psc(struct ieee80211_channel *chan)
 
 	return ieee80211_frequency_to_channel(chan->center_freq) % 16 == 5;
 }
+
+/**
+ * ieee80211_radio_freq_range_valid - Check if the radio supports the
+ * specified frequency range
+ *
+ * @radio: wiphy radio
+ * @freq: the frequency (in KHz) to be queried
+ * @width: the bandwidth (in KHz) to be queried
+ *
+ * Return: whether or not the given frequency range is valid for the given radio
+ */
+bool ieee80211_radio_freq_range_valid(const struct wiphy_radio *radio,
+				      u32 freq, u32 width);
 
 /**
  * cfg80211_radio_chandef_valid - Check if the radio supports the chandef
