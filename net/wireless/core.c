@@ -5,7 +5,7 @@
  * Copyright 2006-2010		Johannes Berg <johannes@sipsolutions.net>
  * Copyright 2013-2014  Intel Mobile Communications GmbH
  * Copyright 2015-2017	Intel Deutschland GmbH
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
@@ -288,6 +288,12 @@ void cfg80211_stop_nan(struct cfg80211_registered_device *rdev,
 	if (!wdev_running(wdev))
 		return;
 
+	/*
+	 * If there is a scheduled update pending, mark it as canceled, so the
+	 * empty schedule will be accepted
+	 */
+	wdev->u.nan.sched_update_pending = false;
+
 	/* Unschedule all */
 	cfg80211_nan_set_local_schedule(rdev, wdev, &empty_sched);
 
@@ -310,9 +316,14 @@ int cfg80211_nan_set_local_schedule(struct cfg80211_registered_device *rdev,
 	if (wdev->iftype != NL80211_IFTYPE_NAN || !wdev_running(wdev))
 		return -EINVAL;
 
+	if (wdev->u.nan.sched_update_pending)
+		return -EBUSY;
+
 	ret = rdev_nan_set_local_sched(rdev, wdev, sched);
 	if (ret)
 		return ret;
+
+	wdev->u.nan.sched_update_pending = sched->deferred;
 
 	kfree(wdev->u.nan.chandefs);
 	wdev->u.nan.chandefs = NULL;

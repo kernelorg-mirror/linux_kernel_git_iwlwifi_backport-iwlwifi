@@ -388,6 +388,40 @@ static int validate_nan_init_ulw(const struct nlattr *attr,
 	return 0;
 }
 
+static int validate_nan_avail_blob(const struct nlattr *attr,
+				   struct netlink_ext_ack *extack)
+{
+	const u8 *data = nla_data(attr);
+	unsigned int len = nla_len(attr);
+	u16 attr_len;
+
+	/* Need at least: Attr ID (1) + Length (2) */
+	if (len < 3) {
+		NL_SET_ERR_MSG_FMT(extack,
+				   "NAN Availability: Too short (need at least 3 bytes, have %u)",
+				   len);
+		return -EINVAL;
+	}
+
+	if (data[0] != 0x12) {
+		NL_SET_ERR_MSG_FMT(extack,
+				   "NAN Availability: Invalid Attribute ID 0x%02x (expected 0x12)",
+				   data[0]);
+		return -EINVAL;
+	}
+
+	attr_len = get_unaligned_le16(&data[1]);
+
+	if (attr_len != len - 3) {
+		NL_SET_ERR_MSG_FMT(extack,
+				   "NAN Availability: Length field (%u) doesn't match data length (%u)",
+				   attr_len, len - 3);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static int validate_uhr_capa(const struct nlattr *attr,
 			     struct netlink_ext_ack *extack)
 {
@@ -1056,6 +1090,9 @@ static const struct nla_policy nl80211_policy[NUM_NL80211_ATTR] = {
 	[NL80211_ATTR_NAN_MAX_CHAN_SWITCH_TIME] = { .type = NLA_U16 },
 	[NL80211_ATTR_NAN_PEER_MAPS] =
 		NLA_POLICY_NESTED_ARRAY(nl80211_nan_peer_map_policy),
+	[NL80211_ATTR_NAN_AVAIL_BLOB] =
+		NLA_POLICY_VALIDATE_FN(NLA_BINARY, validate_nan_avail_blob),
+	[NL80211_ATTR_NAN_SCHED_DEFERRED] = { .type = NLA_FLAG },
 };
 
 /* policy for the key attributes */
@@ -16678,6 +16715,51 @@ nla_put_failure:
 }
 EXPORT_SYMBOL(cfg80211_nan_func_terminated);
 
+void cfg80211_nan_sched_update_done(struct wireless_dev *wdev, bool success,
+				    gfp_t gfp)
+{
+	struct wiphy *wiphy = wdev->wiphy;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wiphy);
+	struct sk_buff *msg;
+	void *hdr;
+
+	trace_cfg80211_nan_sched_update_done(wiphy, wdev, success);
+
+	/* Can happen if we stopped NAN */
+	if (!wdev->u.nan.sched_update_pending)
+		return;
+
+	wdev->u.nan.sched_update_pending = false;
+
+	if (!wdev->owner_nlportid)
+		return;
+
+	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, gfp);
+	if (!msg)
+		return;
+
+	hdr = nl80211hdr_put(msg, 0, 0, 0, NL80211_CMD_NAN_SCHED_UPDATE_DONE);
+	if (!hdr)
+		goto nla_put_failure;
+
+	if (nla_put_u32(msg, NL80211_ATTR_WIPHY, rdev->wiphy_idx) ||
+	    nla_put_u64_64bit(msg, NL80211_ATTR_WDEV, wdev_id(wdev),
+			      NL80211_ATTR_PAD) ||
+	    (success &&
+	     nla_put_flag(msg, NL80211_ATTR_NAN_SCHED_UPDATE_SUCCESS)))
+		goto nla_put_failure;
+
+	genlmsg_end(msg, hdr);
+
+	genlmsg_unicast(wiphy_net(wiphy), msg, wdev->owner_nlportid);
+
+	return;
+
+nla_put_failure:
+	nlmsg_free(msg);
+}
+EXPORT_SYMBOL(cfg80211_nan_sched_update_done);
+
 static int nl80211_parse_nan_channel(struct cfg80211_registered_device *rdev,
 				     struct nlattr *channel,
 				     struct genl_info *info,
@@ -17061,6 +17143,21 @@ static int nl80211_nan_set_local_sched(struct sk_buff *skb,
 					 sched->schedule, sched->n_channels);
 	if (ret)
 		return ret;
+
+	/* TODO: once supplicant supports this, assume that it is present */
+	if (info->attrs[NL80211_ATTR_NAN_AVAIL_BLOB]) {
+		sched->nan_avail_blob =
+			nla_data(info->attrs[NL80211_ATTR_NAN_AVAIL_BLOB]);
+		sched->nan_avail_blob_len =
+			nla_len(info->attrs[NL80211_ATTR_NAN_AVAIL_BLOB]);
+	} else {
+		/* TODO: once supplicant supports the availability BLOB, remove this */
+		static const u8 fake_blob = 0x1;
+		/* Until then, mock a blob */
+		sched->nan_avail_blob = &fake_blob;
+	}
+
+	sched->deferred = nla_get_flag(info->attrs[NL80211_ATTR_NAN_SCHED_DEFERRED]);
 
 	return cfg80211_nan_set_local_schedule(rdev, wdev, sched);
 }
