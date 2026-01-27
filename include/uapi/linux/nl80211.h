@@ -1362,7 +1362,7 @@
  *	user space that the NAN new cluster has been joined. The cluster ID is
  *	indicated by %NL80211_ATTR_MAC.
  * @NL80211_CMD_NAN_SET_LOCAL_SCHED: Set the local NAN schedule. NAN must be
- *	operational (%NL80211_CMD_START_NAN was executed). Must contain both of
+ *	operational (%NL80211_CMD_START_NAN was executed). Must contain
  *	%NL80211_ATTR_NAN_TIME_SLOTS, but %NL80211_ATTR_NAN_CHANNEL is optional.
  *	(for example in case of a channel removal, that channel won't be
  *	provided).
