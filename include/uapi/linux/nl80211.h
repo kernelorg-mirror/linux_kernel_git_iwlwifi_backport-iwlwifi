@@ -1395,6 +1395,10 @@
  *	%NL80211_CMD_NAN_SET_LOCAL_SCHED and %NL80211_ATTR_NAN_SCHED_DEFERRED)
  *	has been completed. The presence of %NL80211_ATTR_NAN_SCHED_UPDATE_SUCCESS
  *	indicates that the update was successful.
+ * @NL80211_CMD_NAN_ULW_UPDATE: Notification from the driver to user space
+ *	with the updated ULW blob of the device. User space can use this blob
+ *	to attach to frames sent to peers. This notification contains
+ *	%NL80211_ATTR_NAN_ULW with the ULW blob.
  * @NL80211_CMD_MAX: highest used command number
  * @__NL80211_CMD_AFTER_LAST: internal use
  */
@@ -1662,6 +1666,7 @@ enum nl80211_commands {
 	NL80211_CMD_NAN_SET_PEER_SCHED,
 
 	NL80211_CMD_NAN_SCHED_UPDATE_DONE,
+	NL80211_CMD_NAN_ULW_UPDATE,
 
 	/* add new commands above here */
 
@@ -3053,10 +3058,15 @@ enum nl80211_commands {
  * @NL80211_ATTR_NAN_NMI_MAC: The address of the NMI station to which this NDI
  *	station belongs. Used with %NL80211_CMD_NEW_STATION when adding an NDI
  *	station.
- * @NL80211_ATTR_NAN_INIT_ULW: (Binary) The initial ULW(s) as published by the
- *	peer, as defined in the Wi-Fi Aware (TM) 4.0 specification Table 109
- *	(Unaligned Schedule attribute format). Used to configure the device
+ * @NL80211_ATTR_NAN_ULW: (Binary) The ULW(s) blob, as defined in the Wi-Fi
+ *	Aware (TM) 4.0 specification Table 109 (Unaligned Schedule attribute
+ *	format).
+ *	When used with %NL80211_CMD_NAN_SET_PEER_SCHED, this contains the
+ *	initial ULW(s) as published by the peer. Used to configure the device
  *	with the initial ULW(s) of a peer, before the device starts tracking it.
+ *	When used with %NL80211_CMD_NAN_ULW_UPDATE, this contains the updated
+ *	ULW(s) blob from the device. User space can attach this blob to frames
+ *	sent to peers.
  * @NL80211_ATTR_NAN_COMMITTED_DW: (u16) The committed DW as published by the
  *	peer, as defined in the Wi-Fi Aware (TM) 4.0 specification Table 80
  *	(Committed DW Information field format).
@@ -3672,7 +3682,7 @@ enum nl80211_attrs {
 
 	NL80211_ATTR_NAN_NMI_MAC,
 
-	NL80211_ATTR_NAN_INIT_ULW,
+	NL80211_ATTR_NAN_ULW,
 	NL80211_ATTR_NAN_COMMITTED_DW,
 	NL80211_ATTR_NAN_SEQ_ID,
 	NL80211_ATTR_NAN_MAX_CHAN_SWITCH_TIME,
@@ -3695,6 +3705,7 @@ enum nl80211_attrs {
 #define NL80211_ATTR_SAE_DATA NL80211_ATTR_AUTH_DATA
 #define NL80211_ATTR_CSA_C_OFF_BEACON NL80211_ATTR_CNTDWN_OFFS_BEACON
 #define NL80211_ATTR_CSA_C_OFF_PRESP NL80211_ATTR_CNTDWN_OFFS_PRESP
+#define NL80211_ATTR_NAN_INIT_ULW NL80211_ATTR_NAN_ULW
 
 /*
  * Allow user space programs to use #ifdef on new attributes by defining them

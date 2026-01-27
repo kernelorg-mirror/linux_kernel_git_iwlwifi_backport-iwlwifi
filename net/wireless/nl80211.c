@@ -333,8 +333,8 @@ static int validate_nan_cluster_id(const struct nlattr *attr,
 	return 0;
 }
 
-static int validate_nan_init_ulw(const struct nlattr *attr,
-				 struct netlink_ext_ack *extack)
+static int validate_nan_ulw(const struct nlattr *attr,
+			    struct netlink_ext_ack *extack)
 {
 	const u8 *data = nla_data(attr);
 	unsigned int len = nla_len(attr);
@@ -1083,8 +1083,8 @@ static const struct nla_policy nl80211_policy[NUM_NL80211_ATTR] = {
 	[NL80211_ATTR_NAN_TIME_SLOTS] =
 		NLA_POLICY_EXACT_LEN(CFG80211_NAN_SCHED_NUM_TIME_SLOTS),
 	[NL80211_ATTR_NAN_NMI_MAC] = NLA_POLICY_ETH_ADDR,
-	[NL80211_ATTR_NAN_INIT_ULW] =
-		NLA_POLICY_VALIDATE_FN(NLA_BINARY, validate_nan_init_ulw),
+	[NL80211_ATTR_NAN_ULW] =
+		NLA_POLICY_VALIDATE_FN(NLA_BINARY, validate_nan_ulw),
 	[NL80211_ATTR_NAN_COMMITTED_DW] = { .type = NLA_U16 },
 	[NL80211_ATTR_NAN_SEQ_ID] = { .type = NLA_U8 },
 	[NL80211_ATTR_NAN_MAX_CHAN_SWITCH_TIME] = { .type = NLA_U16 },
@@ -17036,9 +17036,9 @@ static int nl80211_nan_set_peer_sched(struct sk_buff *skb,
 	sched.max_chan_switch =
 		nla_get_u16_default(info->attrs[NL80211_ATTR_NAN_MAX_CHAN_SWITCH_TIME], 0);
 
-	if (info->attrs[NL80211_ATTR_NAN_INIT_ULW]) {
-		sched.ulw_size = nla_len(info->attrs[NL80211_ATTR_NAN_INIT_ULW]);
-		sched.init_ulw = nla_data(info->attrs[NL80211_ATTR_NAN_INIT_ULW]);
+	if (info->attrs[NL80211_ATTR_NAN_ULW]) {
+		sched.ulw_size = nla_len(info->attrs[NL80211_ATTR_NAN_ULW]);
+		sched.init_ulw = nla_data(info->attrs[NL80211_ATTR_NAN_ULW]);
 	}
 
 	/* Initialize all maps as invalid */
@@ -22867,6 +22867,49 @@ void cfg80211_nan_cluster_joined(struct wireless_dev *wdev,
 	nlmsg_free(msg);
 }
 EXPORT_SYMBOL(cfg80211_nan_cluster_joined);
+
+void cfg80211_nan_ulw_update(struct wireless_dev *wdev,
+			     const u8 *ulw, size_t ulw_len, gfp_t gfp)
+{
+	struct wiphy *wiphy = wdev->wiphy;
+	struct cfg80211_registered_device *rdev = wiphy_to_rdev(wiphy);
+	struct sk_buff *msg;
+	void *hdr;
+
+	trace_cfg80211_nan_ulw_update(wiphy, wdev, ulw, ulw_len);
+
+	if (!wdev->owner_nlportid)
+		return;
+
+	/* 32 for the wiphy idx, 64 for the wdev id, 100 for padding */
+	msg = nlmsg_new(nla_total_size(sizeof(u32)) +
+			nla_total_size(ulw_len) +
+			nla_total_size(sizeof(u64)) + 100,
+			gfp);
+	if (!msg)
+		return;
+
+	hdr = nl80211hdr_put(msg, 0, 0, 0, NL80211_CMD_NAN_ULW_UPDATE);
+	if (!hdr)
+		goto nla_put_failure;
+
+	if (nla_put_u32(msg, NL80211_ATTR_WIPHY, rdev->wiphy_idx) ||
+	    nla_put_u64_64bit(msg, NL80211_ATTR_WDEV, wdev_id(wdev),
+			      NL80211_ATTR_PAD) ||
+	    (ulw && ulw_len &&
+	     nla_put(msg, NL80211_ATTR_NAN_ULW, ulw_len, ulw)))
+		goto nla_put_failure;
+
+	genlmsg_end(msg, hdr);
+
+	genlmsg_unicast(wiphy_net(wiphy), msg, wdev->owner_nlportid);
+
+	return;
+
+ nla_put_failure:
+	nlmsg_free(msg);
+}
+EXPORT_SYMBOL(cfg80211_nan_ulw_update);
 
 /* initialisation/exit functions */
 
