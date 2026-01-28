@@ -188,28 +188,6 @@ ieee80211_chandef_he_6ghz_oper_bss(struct ieee80211_sub_if_data *sdata,
 	return ret;
 }
 
-static int ieee80211_prim_chan_index(const struct cfg80211_chan_def *chandef)
-{
-	u32 start;
-
-	switch (chandef->width) {
-	case NL80211_CHAN_WIDTH_20_NOHT:
-	case NL80211_CHAN_WIDTH_20:
-		return 0;
-	case NL80211_CHAN_WIDTH_40:
-	case NL80211_CHAN_WIDTH_80:
-	case NL80211_CHAN_WIDTH_80P80:
-	case NL80211_CHAN_WIDTH_160:
-	case NL80211_CHAN_WIDTH_320:
-		start = chandef->center_freq1 -
-			cfg80211_chandef_get_width(chandef) / 2;
-		return (chandef->chan->center_freq - start - 10) / 20;
-	default:
-		WARN_ON(1);
-		return 0;
-	}
-}
-
 static enum ieee80211_conn_mode
 ieee80211_determine_ap_chan(struct ieee80211_sub_if_data *sdata,
 			    struct ieee80211_channel *channel,
@@ -224,7 +202,7 @@ ieee80211_determine_ap_chan(struct ieee80211_sub_if_data *sdata,
 	const struct ieee80211_vht_operation *vht_oper = elems->vht_operation;
 	const struct ieee80211_he_operation *he_oper = elems->he_operation;
 	const struct ieee80211_eht_operation *eht_oper = elems->eht_operation;
-	const struct ieee80211_uhr_oper *uhr_oper = elems->uhr_oper;
+	const struct ieee80211_uhr_operation *uhr_oper = elems->uhr_operation;
 	struct ieee80211_supported_band *sband =
 		sdata->local->hw.wiphy->bands[channel->band];
 	struct cfg80211_chan_def vht_chandef;
@@ -446,7 +424,7 @@ check_uhr:
 	 * can validate the NPCA parameters.
 	 */
 	if (ieee80211_uhr_oper_size_ok((const void *)uhr_oper,
-				       elems->uhr_oper_len,
+				       elems->uhr_operation_len,
 				       false)) {
 		struct cfg80211_chan_def npca_chandef = *chandef;
 		const struct ieee80211_uhr_npca_info *npca;
@@ -455,11 +433,17 @@ check_uhr:
 
 		npca = ieee80211_uhr_npca_info(uhr_oper);
 		if (npca) {
-			u8 ch = le32_get_bits(npca->params,
-					      IEEE80211_UHR_NPCA_PARAMS_PRIMARY_CHAN);
+			int width = cfg80211_chandef_get_width(chandef);
+			u8 offs = le32_get_bits(npca->params,
+						IEEE80211_UHR_NPCA_PARAMS_PRIMARY_CHAN_OFFS);
+			u32 cf1 = chandef->center_freq1;
+			bool pri_upper, npca_upper;
 
-			if (20 * ch >= cfg80211_chandef_get_width(chandef) ||
-			    ch == ieee80211_prim_chan_index(chandef)) {
+			pri_upper = chandef->chan->center_freq > cf1;
+			npca_upper = 20 * offs >= width / 2;
+
+			if (20 * offs >= cfg80211_chandef_get_width(chandef) ||
+			    pri_upper == npca_upper) {
 				sdata_info(sdata,
 					   "AP UHR NPCA primary channel invalid, disabling UHR\n");
 				return IEEE80211_CONN_MODE_EHT;
@@ -2298,8 +2282,8 @@ ieee80211_link_common_elems_size(struct ieee80211_sub_if_data *sdata,
 		sizeof(struct ieee80211_eht_mcs_nss_supp) +
 		IEEE80211_EHT_PPE_THRES_MAX_LEN;
 
-	size += 2 + 1 + sizeof(struct ieee80211_uhr_capa) +
-		sizeof(struct ieee80211_uhr_capa_phy);
+	size += 2 + 1 + sizeof(struct ieee80211_uhr_cap) +
+		sizeof(struct ieee80211_uhr_cap_phy);
 
 	return size;
 }
@@ -5689,11 +5673,11 @@ static bool ieee80211_assoc_config_link(struct ieee80211_link_data *link,
 		bss_conf->epcs_support = false;
 	}
 
-	if (elems->uhr_oper && elems->uhr_capa &&
+	if (elems->uhr_operation && elems->uhr_cap &&
 	    link->u.mgd.conn.mode >= IEEE80211_CONN_MODE_UHR) {
 		ieee80211_uhr_cap_ie_to_sta_uhr_cap(sdata, sband,
-						    elems->uhr_capa,
-						    elems->uhr_capa_len,
+						    elems->uhr_cap,
+						    elems->uhr_cap_len,
 						    link_sta);
 
 		bss_conf->uhr_support = link_sta->pub->uhr_cap.has_uhr;

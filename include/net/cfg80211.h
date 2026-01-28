@@ -444,8 +444,8 @@ struct ieee80211_sta_eht_cap {
  */
 struct ieee80211_sta_uhr_cap {
 	bool has_uhr;
-	struct ieee80211_uhr_capa_mac mac;
-	struct ieee80211_uhr_capa_phy phy;
+	struct ieee80211_uhr_cap_mac mac;
+	struct ieee80211_uhr_cap_phy phy;
 };
 
 /* sparse defines __CHECKER__; see Documentation/dev-tools/sparse.rst */
@@ -1527,7 +1527,7 @@ struct cfg80211_s1g_short_beacon {
  * @he_cap: HE capabilities (or %NULL if HE isn't enabled)
  * @eht_cap: EHT capabilities (or %NULL if EHT isn't enabled)
  * @eht_oper: EHT operation IE (or %NULL if EHT isn't enabled)
- * @uhr_capa: UHR operation (or %NULL if UHR isn't enabled)
+ * @uhr_oper: UHR operation (or %NULL if UHR isn't enabled)
  * @ht_required: stations must support HT
  * @vht_required: stations must support VHT
  * @he_required: stations must support HE
@@ -1571,7 +1571,7 @@ struct cfg80211_ap_settings {
 	const struct ieee80211_he_operation *he_oper;
 	const struct ieee80211_eht_cap_elem *eht_cap;
 	const struct ieee80211_eht_operation *eht_oper;
-	const struct ieee80211_uhr_oper *uhr_oper;
+	const struct ieee80211_uhr_operation *uhr_oper;
 	bool ht_required, vht_required, he_required, sae_h2e_required;
 	bool twt_responder;
 	u32 flags;
@@ -1766,7 +1766,7 @@ struct link_station_parameters {
 	const struct ieee80211_eht_cap_elem *eht_capa;
 	u8 eht_capa_len;
 	const struct ieee80211_s1g_cap *s1g_capa;
-	const struct ieee80211_uhr_capa *uhr_capa;
+	const struct ieee80211_uhr_cap *uhr_capa;
 	u8 uhr_capa_len;
 };
 

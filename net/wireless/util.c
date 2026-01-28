@@ -1717,6 +1717,9 @@ static u32 _cfg80211_calculate_bitrate_eht_uhr(struct rate_info *rate)
 
 	/* and handle interference mitigation - 0.9x */
 	if (rate->flags & RATE_INFO_FLAGS_UHR_IM) {
+		if (WARN(rate->nss != 1 || rate->mcs == 15,
+			 "invalid NSS or MCS for UHR IM\n"))
+			return 0;
 		tmp *= 9000;
 		do_div(tmp, 10000);
 	}
