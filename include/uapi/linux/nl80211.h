@@ -3028,9 +3028,9 @@ enum nl80211_commands {
  * @NL80211_ATTR_NAN_CHANNEL_ENTRY: a byte array of 6 bytes. contains the
  *	Channel Entry as defined in Wi-Fi Aware (TM) 4.0 specification Table
  *	100 (Channel Entry format for the NAN Availability attribute).
- * @NL80211_ATTR_NAN_RX_NSS: (u8) RX NSS used for a peer NAN channel. This is
- *	used with %NL80211_ATTR_NAN_CHANNEL when configuring
- *	peer NAN channels with %NL80211_CMD_NAN_SET_PEER_SCHED.
+ * @NL80211_ATTR_NAN_RX_NSS: (u8) RX NSS used for a NAN channel. This is
+ *	used with %NL80211_ATTR_NAN_CHANNEL when configuring NAN channels with
+ *	%NL80211_CMD_NAN_SET_PEER_SCHED or %NL80211_CMD_NAN_SET_LOCAL_SCHED.
  * @NL80211_ATTR_NAN_TIME_SLOTS: an array of u8 values and 32 cells. each value
  *	maps a time slot to the chandef on which the radio should operate on in
  *	that time. %NL80211_NAN_SCHED_NOT_AVAIL_SLOT indicates unscheduled.
