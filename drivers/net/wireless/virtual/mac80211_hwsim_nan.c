@@ -1219,7 +1219,7 @@ void mac80211_hwsim_nan_local_sched_changed(struct ieee80211_hw *hw,
 					    struct ieee80211_vif *vif)
 {
 	struct mac80211_hwsim_data *data = hw->priv;
-	struct ieee80211_nan_channel **slots = vif->cfg.nan_schedule;
+	struct ieee80211_nan_channel **slots = vif->cfg.nan_sched.schedule;
 
 	if (WARN_ON(vif->type != NL80211_IFTYPE_NAN))
 		return;
