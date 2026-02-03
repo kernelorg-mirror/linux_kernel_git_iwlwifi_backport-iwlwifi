@@ -934,14 +934,7 @@ int mac80211_hwsim_nan_start(struct ieee80211_hw *hw,
 		      ns_to_ktime(10 * NSEC_PER_USEC),
 		      HRTIMER_MODE_REL_SOFT);
 
-	if (conf->cluster_id && !is_zero_ether_addr(conf->cluster_id)) {
-		memcpy(data->nan.cluster_id, conf->cluster_id, ETH_ALEN);
-	} else {
-		put_unaligned_be32((WLAN_OUI_WFA << 8) | 0x01,
-				   data->nan.cluster_id);
-		data->nan.cluster_id[4] = get_random_u8();
-		data->nan.cluster_id[5] = get_random_u8();
-	}
+	ether_addr_copy(data->nan.cluster_id, conf->cluster_id);
 
 	data->nan.notify_dw = conf->enable_dw_notification;
 
