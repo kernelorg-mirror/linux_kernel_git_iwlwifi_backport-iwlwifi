@@ -411,6 +411,8 @@ void cfg80211_destroy_ifaces(struct cfg80211_registered_device *rdev)
 
 	list_for_each_entry_safe(wdev, tmp, &rdev->wiphy.wdev_list, list) {
 		if (wdev->nl_owner_dead) {
+			cfg80211_close_dependents(rdev, wdev);
+
 			if (wdev->netdev)
 				dev_close(wdev->netdev);
 
