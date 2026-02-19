@@ -1835,6 +1835,7 @@ struct cfg80211_ttlm_params {
  *	present/updated
  * @eml_cap: EML capabilities of this station
  * @link_sta_params: link related params.
+ * @epp_peer: EPP peer indication
  * @nmi_mac: MAC address of the NMI station of the NAN peer
  */
 struct station_parameters {
@@ -1862,6 +1863,7 @@ struct station_parameters {
 	bool eml_cap_present;
 	u16 eml_cap;
 	struct link_station_parameters link_sta_params;
+	bool epp_peer;
 	const u8 *nmi_mac;
 };
 
@@ -4157,11 +4159,24 @@ struct cfg80211_nan_channel {
  * @schedule: a mapping of time slots to chandef indexes in %nan_channels.
  *	An unscheduled slot will be set to %NL80211_NAN_SCHED_NOT_AVAIL_SLOT.
  * @n_channels: number of channel definitions in %nan_channels.
+ * @nan_avail_blob: pointer to NAN Availability attribute blob.
+ *	See %NL80211_ATTR_NAN_AVAIL_BLOB for more details.
+ * @nan_avail_blob_len: length of the @nan_avail_blob in bytes.
+ * @deferred: if true, the command containing this schedule configuration is a
+ *	request from the device to perform an announced schedule update. This
+ *	means that it needs to send the updated NAN availability to the peers,
+ *	and do the actual switch on the right time (i.e. at the end of the slot
+ *	after the slot in which the updated NAN Availability was sent).
+ *	See %NL80211_ATTR_NAN_SCHED_DEFERRED for more details.
+ *	If false, the schedule is applied immediately.
  * @nan_channels: array of NAN channel definitions that can be scheduled.
  */
 struct cfg80211_nan_local_sched {
 	u8 schedule[CFG80211_NAN_SCHED_NUM_TIME_SLOTS];
 	u8 n_channels;
+	const u8 *nan_avail_blob;
+	u16 nan_avail_blob_len;
+	bool deferred;
 	struct cfg80211_nan_channel nan_channels[] __counted_by(n_channels);
 };
 
@@ -7052,6 +7067,7 @@ struct wireless_dev {
 			u8 cluster_id[ETH_ALEN] __aligned(2);
 			u8 n_channels;
 			struct cfg80211_chan_def *chandefs;
+			bool sched_update_pending;
 		} nan;
 	} u;
 
@@ -10179,6 +10195,18 @@ void cfg80211_nan_func_terminated(struct wireless_dev *wdev,
 				  enum nl80211_nan_func_term_reason reason,
 				  u64 cookie, gfp_t gfp);
 
+/**
+ * cfg80211_nan_sched_update_done - notify deferred schedule update completion
+ * @wdev: the wireless device reporting the event
+ * @success: whether or not the schedule update was successful
+ * @gfp: allocation flags
+ *
+ * This function notifies user space that a deferred local NAN schedule update
+ * (requested with %NL80211_ATTR_NAN_SCHED_DEFERRED) has been completed.
+ */
+void cfg80211_nan_sched_update_done(struct wireless_dev *wdev, bool success,
+				    gfp_t gfp);
+
 /* ethtool helper */
 void cfg80211_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info);
 
@@ -10519,7 +10547,40 @@ void cfg80211_nan_cluster_joined(struct wireless_dev *wdev,
 				 const u8 *cluster_id, bool new_cluster,
 				 gfp_t gfp);
 
-#ifdef CPTCFG_CFG80211_DEBUGFS
+/**
+ * cfg80211_nan_ulw_update - Notify user space about ULW update
+ * @wdev: Pointer to the wireless device structure
+ * @ulw: Pointer to the ULW blob data
+ * @ulw_len: Length of the ULW blob in bytes
+ * @gfp: Memory allocation flags
+ *
+ * This function is used by drivers to notify user space when the device's
+ * ULW (Unaligned Schedule) blob has been updated. User space can use this
+ * blob to attach to frames sent to peers.
+ */
+void cfg80211_nan_ulw_update(struct wireless_dev *wdev,
+			     const u8 *ulw, size_t ulw_len, gfp_t gfp);
+
+/**
+ * cfg80211_nan_channel_evac - Notify user space about NAN channel evacuation
+ * @wdev: Pointer to the wireless device structure
+ * @chandef: Pointer to the channel definition of the NAN channel that was
+ *	evacuated
+ * @gfp: Memory allocation flags
+ *
+ * This function is used by drivers to notify user space when a NAN
+ * channel has been evacuated (i.e. ULWed) due to channel resource conflicts
+ * with other interfaces.
+ * This can happen when another interface sharing the channel resource with NAN
+ * needs to move to a different channel (e.g. due to channel switch or link
+ * switch). User space may reconfigure the local schedule to exclude the
+ * evacuated channel.
+ */
+void cfg80211_nan_channel_evac(struct wireless_dev *wdev,
+			       const struct cfg80211_chan_def *chandef,
+			       gfp_t gfp);
+
+#ifdef CONFIG_CFG80211_DEBUGFS
 /**
  * wiphy_locked_debugfs_read - do a locked read in debugfs
  * @wiphy: the wiphy to use
