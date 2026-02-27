@@ -17201,6 +17201,19 @@ static int nl80211_nan_set_peer_sched(struct sk_buff *skb,
 	return rdev_nan_set_peer_sched(rdev, wdev, &sched);
 }
 
+static bool nl80211_nan_is_sched_empty(struct cfg80211_nan_local_sched *sched)
+{
+	if (!sched->n_channels)
+		return true;
+
+	for (int i = 0; i < ARRAY_SIZE(sched->schedule); i++) {
+		if (sched->schedule[i] != NL80211_NAN_SCHED_NOT_AVAIL_SLOT)
+			return false;
+	}
+
+	return true;
+}
+
 static int nl80211_nan_set_local_sched(struct sk_buff *skb,
 				       struct genl_info *info)
 {
@@ -17209,6 +17222,7 @@ static int nl80211_nan_set_local_sched(struct sk_buff *skb,
 	struct wireless_dev *wdev = info->user_ptr[1];
 	int rem, i = 0, n_channels = 0, ret;
 	struct nlattr *channel;
+	bool sched_empty;
 
 	if (wdev->iftype != NL80211_IFTYPE_NAN)
 		return -EOPNOTSUPP;
@@ -17248,20 +17262,35 @@ static int nl80211_nan_set_local_sched(struct sk_buff *skb,
 	if (ret)
 		return ret;
 
-	/* TODO: once supplicant supports this, assume that it is present */
-	if (info->attrs[NL80211_ATTR_NAN_AVAIL_BLOB]) {
+	sched_empty = nl80211_nan_is_sched_empty(sched);
+
+	sched->deferred =
+		nla_get_flag(info->attrs[NL80211_ATTR_NAN_SCHED_DEFERRED]);
+
+	if (sched_empty) {
+		if (sched->deferred) {
+			NL_SET_ERR_MSG(info->extack,
+				       "Schedule cannot be deferred if all time slots are unavailable");
+			return -EINVAL;
+		}
+
+		if (info->attrs[NL80211_ATTR_NAN_AVAIL_BLOB]) {
+			NL_SET_ERR_MSG(info->extack,
+				       "NAN Availability blob must be empty if all time slots are unavailable");
+			return -EINVAL;
+		}
+	} else {
+		if (!info->attrs[NL80211_ATTR_NAN_AVAIL_BLOB]) {
+			NL_SET_ERR_MSG(info->extack,
+				       "NAN Availability blob attribute is required");
+			return -EINVAL;
+		}
+
 		sched->nan_avail_blob =
 			nla_data(info->attrs[NL80211_ATTR_NAN_AVAIL_BLOB]);
 		sched->nan_avail_blob_len =
 			nla_len(info->attrs[NL80211_ATTR_NAN_AVAIL_BLOB]);
-	} else {
-		/* TODO: once supplicant supports the availability BLOB, remove this */
-		static const u8 fake_blob = 0x1;
-		/* Until then, mock a blob */
-		sched->nan_avail_blob = &fake_blob;
 	}
-
-	sched->deferred = nla_get_flag(info->attrs[NL80211_ATTR_NAN_SCHED_DEFERRED]);
 
 	return cfg80211_nan_set_local_schedule(rdev, wdev, sched);
 }
