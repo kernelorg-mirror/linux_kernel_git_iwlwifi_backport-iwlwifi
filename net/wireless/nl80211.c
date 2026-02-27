@@ -365,12 +365,14 @@ static int validate_nan_init_ulw(const struct nlattr *attr,
 
 		/*
 		 * Check if length is one of the valid values: 16 (no
-		 * channel/band entry included), 19 (band entry included), or 26
-		 * (channel entry included)
+		 * channel/band entry included), 18 (band entry included),
+		 * 21 (channel entry included without Auxiliary channel bitmap),
+		 * or 23 (channel entry included with Auxiliary channel bitmap).
 		 */
-		if (attr_len != 16 && attr_len != 19 && attr_len != 26) {
+		if (attr_len != 16 && attr_len != 18 && attr_len != 21 &&
+		    attr_len != 23) {
 			NL_SET_ERR_MSG_FMT(extack,
-					   "ULW: Invalid length %u (must be 16, 19, or 26)",
+					   "ULW: Invalid length %u (must be 16, 18, 21, or 23)",
 					   attr_len);
 			return -EINVAL;
 		}
