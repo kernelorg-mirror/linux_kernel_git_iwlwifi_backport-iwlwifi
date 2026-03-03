@@ -113,8 +113,7 @@ static void test_chan_load_thresholds(struct kunit *test)
 	link_conf = &vif->bss_conf;
 	mld_link = &mld_vif->deflink;
 
-	/* Apply normalization and set channel load */
-	chan_load = NORMALIZE_PERCENT_TO_255(tc->load);
+	chan_load = tc->load;
 	mld_link->chan_load_lvl = tc->old_lvl;
 
 	/* Execute function under test */
