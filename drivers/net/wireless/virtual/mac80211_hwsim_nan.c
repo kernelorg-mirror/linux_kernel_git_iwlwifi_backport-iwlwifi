@@ -1176,9 +1176,7 @@ bool mac80211_hwsim_nan_txq_transmitting(struct ieee80211_hw *hw,
 		/* Allow multicast data when all the peers are available
 		 * on this slot
 		 */
-		if (txq->vif->type == NL80211_IFTYPE_NAN_DATA)
-			return mac80211_hwsim_nan_mcast_data_transmitting(hw,
-									  txq);
+		return mac80211_hwsim_nan_mcast_data_transmitting(hw, txq);
 	}
 
 	/* STA TXQ: need peer schedule for availability check */
