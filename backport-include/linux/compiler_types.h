@@ -22,4 +22,9 @@
 #define __member_size(p)	__builtin_object_size(p, 1)
 #endif
 
+/* normally from compiler-context-analysis.h */
+#ifndef __no_context_analysis
+#define __no_context_analysis
+#endif
+
 #endif /* _BACKPORTS_LINUX_COMPILER_TYPES_H */
