@@ -67,7 +67,10 @@ static inline void timer_setup(struct timer_list *timer,
 		__TIMER_INITIALIZER(_function, 0, 0, 0)
 #endif
 
-#if LINUX_VERSION_IS_LESS(6,2,0)
+/* This was backported to 5.15.200, but we've seen it on some (non-vanilla) versions of 5.15.185
+ * Break vanilla 5.15.185 -> 5.15.200, any 5.15 kernel post .200 has this API */
+#if LINUX_VERSION_IS_LESS(6,2,0) &&	\
+	!LINUX_VERSION_IN_RANGE(5,15,185, 5,16,0)
 static inline int timer_shutdown(struct timer_list *t)
 {
 	return del_timer(t);
@@ -91,7 +94,10 @@ static inline int timer_delete_sync(struct timer_list *timer)
 }
 #endif /* < 6.1.84 */
 
-#if LINUX_VERSION_IS_LESS(6,2,0)
+/* This was backported to 5.15.200, but we've seen it on some (non-vanilla) versions of 5.15.185
+ * Break vanilla 5.15.185 -> 5.15.200 since we're now at 5.15.202 and 5.15.202 does have those APIs. */
+#if LINUX_VERSION_IS_LESS(6,2,0) &&	\
+	!LINUX_VERSION_IN_RANGE(5,15,185, 5,16,0)
 static inline int timer_delete(struct timer_list *timer)
 {
 	return del_timer(timer);
