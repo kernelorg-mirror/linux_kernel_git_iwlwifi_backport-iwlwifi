@@ -192,7 +192,8 @@ static inline int genlmsg_parse(const struct nlmsghdr *nlh,
 	!LINUX_VERSION_IN_RANGE(5,10,229, 5,11,0) &&	\
 	!LINUX_VERSION_IN_RANGE(5,15,170, 5,16,0) &&	\
 	!LINUX_VERSION_IN_RANGE(6,1,115, 6,2,0) &&	\
-	!LINUX_VERSION_IN_RANGE(6,6,59, 6,7,0)
+	!LINUX_VERSION_IN_RANGE(6,6,59, 6,7,0) &&	\
+	!LINUX_VERSION_IN_RANGE(6,8,12, 6,9,0)
 static inline 
 int backport_genlmsg_multicast_allns(const struct genl_family *family,
 				     struct sk_buff *skb, u32 portid,
