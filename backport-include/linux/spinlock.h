@@ -40,7 +40,9 @@ DEFINE_LOCK_GUARD_1_COND(spinlock_bh, _try,
 
 #endif /* LINUX_VERSION_IS_LESS(6,15,0) */
 
-#if LINUX_VERSION_IS_LESS(6,5,0)
+#if LINUX_VERSION_IS_LESS(6,5,0) &&			\
+	!LINUX_VERSION_IN_RANGE(5,15,195, 5,16,0) &&	\
+	!LINUX_VERSION_IN_RANGE(6,1,79, 6,2,0)
 DEFINE_LOCK_GUARD_1(spinlock, spinlock_t,
 		    spin_lock(_T->lock),
 		    spin_unlock(_T->lock))

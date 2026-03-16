@@ -99,7 +99,9 @@ rcu_head_after_call_rcu(struct rcu_head *rhp, rcu_callback_t f)
 #endif
 
 /* Originally in 6.5, backported to 6.1.79, 6.2-6.4 no longer maintained */
-#if LINUX_VERSION_IS_LESS(6,1,79)
+/* also backported to 5.15 series */
+#if LINUX_VERSION_IS_LESS(6,1,79) &&	\
+	!LINUX_VERSION_IN_RANGE(5,15,195, 5,16,0)
 DEFINE_LOCK_GUARD_0(rcu,
 	do {
 		rcu_read_lock();
