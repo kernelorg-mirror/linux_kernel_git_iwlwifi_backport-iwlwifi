@@ -156,10 +156,17 @@ int iwl_mld_phy_fw_action(struct iwl_mld *mld,
 		cmd.sbb_ctrl_channel_loc = iwl_mld_get_fw_ctrl_pos(&ctx->ap);
 	}
 
+	/*
+	 * Set NPCA channel if NPCA is used; if not used, just set it to an
+	 * arbitrary channel on the other side to help firmware.
+	 */
 	if (chandef->npca_chan)
 		cmd.secondary_ctrl_chnl_loc =
 			_iwl_mld_get_fw_ctrl_pos(chandef->npca_chan->center_freq,
 						 chandef->center_freq1);
+	else
+		cmd.secondary_ctrl_chnl_loc =
+			cmd.ci.ctrl_pos ^ IWL_PHY_CTRL_POS_ABOVE;
 
 	ret = iwl_mld_send_cmd_pdu(mld, PHY_CONTEXT_CMD, &cmd);
 	if (ret)
