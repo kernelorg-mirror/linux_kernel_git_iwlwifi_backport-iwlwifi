@@ -550,7 +550,7 @@ int iwl_mld_add_link(struct iwl_mld *mld,
 		if (is_deflink) {
 			link = &mld_vif->deflink;
 		} else {
-			link = kzalloc(sizeof(*link), GFP_KERNEL);
+			link = kzalloc_obj(*link);
 			if (!link)
 				return -ENOMEM;
 		}

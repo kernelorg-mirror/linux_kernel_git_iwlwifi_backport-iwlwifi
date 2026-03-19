@@ -1089,6 +1089,7 @@ static const struct nla_policy nl80211_policy[NUM_NL80211_ATTR] = {
 		NLA_POLICY_NESTED(nl80211_s1g_short_beacon),
 	[NL80211_ATTR_BSS_PARAM] = { .type = NLA_FLAG },
 	[NL80211_ATTR_S1G_PRIMARY_2MHZ] = { .type = NLA_FLAG },
+	[NL80211_ATTR_EPP_PEER] = { .type = NLA_FLAG },
 	[NL80211_ATTR_UHR_CAPABILITY] =
 		NLA_POLICY_VALIDATE_FN(NLA_BINARY, validate_uhr_capa, 255),
 	[NL80211_ATTR_DISABLE_UHR] = { .type = NLA_FLAG },
@@ -1278,8 +1279,7 @@ static int nl80211_prepare_wdev_dump(struct netlink_callback *cb,
 		struct nlattr **attrbuf_free = NULL;
 
 		if (!attrbuf) {
-			attrbuf = kcalloc(NUM_NL80211_ATTR, sizeof(*attrbuf),
-					  GFP_KERNEL);
+			attrbuf = kzalloc_objs(*attrbuf, NUM_NL80211_ATTR);
 			if (!attrbuf)
 				return -ENOMEM;
 			attrbuf_free = attrbuf;
@@ -1499,6 +1499,9 @@ static int nl80211_msg_put_channel(struct sk_buff *msg, struct wiphy *wiphy,
 			goto nla_put_failure;
 		if ((chan->flags & IEEE80211_CHAN_NO_16MHZ) &&
 		    nla_put_flag(msg, NL80211_FREQUENCY_ATTR_NO_16MHZ))
+			goto nla_put_failure;
+		if ((chan->flags & IEEE80211_CHAN_S1G_NO_PRIMARY) &&
+		    nla_put_flag(msg, NL80211_FREQUENCY_ATTR_S1G_NO_PRIMARY))
 			goto nla_put_failure;
 		if ((chan->flags & IEEE80211_CHAN_NO_UHR) &&
 		    nla_put_flag(msg, NL80211_FREQUENCY_ATTR_NO_UHR))
@@ -1784,7 +1787,7 @@ nl80211_parse_connkeys(struct cfg80211_registered_device *rdev,
 	if (!have_key)
 		return NULL;
 
-	result = kzalloc(sizeof(*result), GFP_KERNEL);
+	result = kzalloc_obj(*result);
 	if (!result)
 		return ERR_PTR(-ENOMEM);
 
@@ -1864,7 +1867,9 @@ static int nl80211_key_allowed(struct wireless_dev *wdev)
 		return -ENOLINK;
 	case NL80211_IFTYPE_STATION:
 	case NL80211_IFTYPE_P2P_CLIENT:
-		if (wdev->connected)
+		if (wdev->connected ||
+		    (wiphy_ext_feature_isset(wdev->wiphy,
+					     NL80211_EXT_FEATURE_ASSOC_FRAME_ENCRYPTION)))
 			return 0;
 		return -ENOLINK;
 	case NL80211_IFTYPE_NAN:
@@ -3606,7 +3611,7 @@ static int nl80211_dump_wiphy_parse(struct sk_buff *skb,
 				    struct netlink_callback *cb,
 				    struct nl80211_dump_wiphy_state *state)
 {
-	struct nlattr **tb = kcalloc(NUM_NL80211_ATTR, sizeof(*tb), GFP_KERNEL);
+	struct nlattr **tb = kzalloc_objs(*tb, NUM_NL80211_ATTR);
 	int ret;
 
 	if (!tb)
@@ -3658,7 +3663,7 @@ static int nl80211_dump_wiphy(struct sk_buff *skb, struct netlink_callback *cb)
 
 	rtnl_lock();
 	if (!state) {
-		state = kzalloc(sizeof(*state), GFP_KERNEL);
+		state = kzalloc_obj(*state);
 		if (!state) {
 			rtnl_unlock();
 			return -ENOMEM;
@@ -5633,7 +5638,7 @@ static struct cfg80211_acl_data *parse_acl_data(struct wiphy *wiphy,
 	if (n_entries > wiphy->max_acl_mac_addrs)
 		return ERR_PTR(-EOPNOTSUPP);
 
-	acl = kzalloc(struct_size(acl, mac_addrs, n_entries), GFP_KERNEL);
+	acl = kzalloc_flex(*acl, mac_addrs, n_entries);
 	if (!acl)
 		return ERR_PTR(-ENOMEM);
 	acl->n_acl_entries = n_entries;
@@ -6413,7 +6418,7 @@ nl80211_parse_mbssid_elems(struct wiphy *wiphy, struct nlattr *attrs)
 		num_elems++;
 	}
 
-	elems = kzalloc(struct_size(elems, elem, num_elems), GFP_KERNEL);
+	elems = kzalloc_flex(*elems, elem, num_elems);
 	if (!elems)
 		return ERR_PTR(-ENOMEM);
 	elems->cnt = num_elems;
@@ -6445,7 +6450,7 @@ nl80211_parse_rnr_elems(struct wiphy *wiphy, struct nlattr *attrs,
 		num_elems++;
 	}
 
-	elems = kzalloc(struct_size(elems, elem, num_elems), GFP_KERNEL);
+	elems = kzalloc_flex(*elems, elem, num_elems);
 	if (!elems)
 		return ERR_PTR(-ENOMEM);
 	elems->cnt = num_elems;
@@ -6828,6 +6833,10 @@ static bool nl80211_valid_auth_type(struct cfg80211_registered_device *rdev,
 		     auth_type == NL80211_AUTHTYPE_FILS_SK_PFS ||
 		     auth_type == NL80211_AUTHTYPE_FILS_PK))
 			return false;
+		if (!wiphy_ext_feature_isset(&rdev->wiphy,
+					     NL80211_EXT_FEATURE_EPPKE) &&
+		    auth_type == NL80211_AUTHTYPE_EPPKE)
+			return false;
 		return true;
 	case NL80211_CMD_CONNECT:
 		if (!(rdev->wiphy.features & NL80211_FEATURE_SAE) &&
@@ -6844,6 +6853,10 @@ static bool nl80211_valid_auth_type(struct cfg80211_registered_device *rdev,
 			    &rdev->wiphy,
 			    NL80211_EXT_FEATURE_FILS_SK_OFFLOAD) &&
 		    auth_type == NL80211_AUTHTYPE_FILS_SK)
+			return false;
+		if (!wiphy_ext_feature_isset(&rdev->wiphy,
+					     NL80211_EXT_FEATURE_EPPKE) &&
+		    auth_type == NL80211_AUTHTYPE_EPPKE)
 			return false;
 		return true;
 	case NL80211_CMD_START_AP:
@@ -7006,7 +7019,7 @@ static int nl80211_start_ap(struct sk_buff *skb, struct genl_info *info)
 	    nla_get_u8(info->attrs[NL80211_ATTR_SMPS_MODE]) != NL80211_SMPS_OFF)
 		return -EOPNOTSUPP;
 
-	params = kzalloc(sizeof(*params), GFP_KERNEL);
+	params = kzalloc_obj(*params);
 	if (!params)
 		return -ENOMEM;
 
@@ -7310,7 +7323,7 @@ static int nl80211_set_beacon(struct sk_buff *skb, struct genl_info *info)
 	if (!wdev->links[link_id].ap.beacon_interval)
 		return -EINVAL;
 
-	params = kzalloc(sizeof(*params), GFP_KERNEL);
+	params = kzalloc_obj(*params);
 	if (!params)
 		return -ENOMEM;
 
@@ -8325,7 +8338,7 @@ static int nl80211_dump_station(struct sk_buff *skb,
 
 		for (i = 0; i < IEEE80211_MLD_MAX_NUM_LINKS; i++) {
 			sinfo.links[i] =
-				kzalloc(sizeof(*sinfo.links[0]), GFP_KERNEL);
+				kzalloc_obj(*sinfo.links[0]);
 			if (!sinfo.links[i]) {
 				err = -ENOMEM;
 				goto out_err;
@@ -8392,7 +8405,7 @@ static int nl80211_get_station(struct sk_buff *skb, struct genl_info *info)
 		return -EOPNOTSUPP;
 
 	for (i = 0; i < IEEE80211_MLD_MAX_NUM_LINKS; i++) {
-		sinfo.links[i] = kzalloc(sizeof(*sinfo.links[0]), GFP_KERNEL);
+		sinfo.links[i] = kzalloc_obj(*sinfo.links[0]);
 		if (!sinfo.links[i]) {
 			cfg80211_sinfo_release_content(&sinfo);
 			return -ENOMEM;
@@ -9305,6 +9318,10 @@ static int nl80211_new_station(struct sk_buff *skb, struct genl_info *info)
 			goto out;
 		}
 	}
+
+	params.epp_peer =
+		nla_get_flag(info->attrs[NL80211_ATTR_EPP_PEER]);
+
 	err = rdev_add_station(rdev, wdev, mac_addr, &params);
 out:
 	dev_put(params.vlan);
@@ -10565,7 +10582,7 @@ static int nl80211_set_reg(struct sk_buff *skb, struct genl_info *info)
 		goto out;
 	}
 
-	rd = kzalloc(struct_size(rd, reg_rules, num_rules), GFP_KERNEL);
+	rd = kzalloc_flex(*rd, reg_rules, num_rules);
 	if (!rd) {
 		r = -ENOMEM;
 		goto out;
@@ -11961,8 +11978,7 @@ static int nl80211_channel_switch(struct sk_buff *skb, struct genl_info *info)
 	if (err)
 		goto free;
 
-	csa_attrs = kcalloc(NL80211_ATTR_MAX + 1, sizeof(*csa_attrs),
-			    GFP_KERNEL);
+	csa_attrs = kzalloc_objs(*csa_attrs, NL80211_ATTR_MAX + 1);
 	if (!csa_attrs) {
 		err = -ENOMEM;
 		goto free;
@@ -12237,7 +12253,7 @@ static int nl80211_dump_scan(struct sk_buff *skb, struct netlink_callback *cb)
 	bool dump_include_use_data;
 	int err;
 
-	attrbuf = kcalloc(NUM_NL80211_ATTR, sizeof(*attrbuf), GFP_KERNEL);
+	attrbuf = kzalloc_objs(*attrbuf, NUM_NL80211_ATTR);
 	if (!attrbuf)
 		return -ENOMEM;
 
@@ -12377,7 +12393,7 @@ static int nl80211_dump_survey(struct sk_buff *skb, struct netlink_callback *cb)
 	int res;
 	bool radio_stats;
 
-	attrbuf = kcalloc(NUM_NL80211_ATTR, sizeof(*attrbuf), GFP_KERNEL);
+	attrbuf = kzalloc_objs(*attrbuf, NUM_NL80211_ATTR);
 	if (!attrbuf)
 		return -ENOMEM;
 
@@ -12532,7 +12548,8 @@ static int nl80211_authenticate(struct sk_buff *skb, struct genl_info *info)
 	if ((auth_type == NL80211_AUTHTYPE_SAE ||
 	     auth_type == NL80211_AUTHTYPE_FILS_SK ||
 	     auth_type == NL80211_AUTHTYPE_FILS_SK_PFS ||
-	     auth_type == NL80211_AUTHTYPE_FILS_PK) &&
+	     auth_type == NL80211_AUTHTYPE_FILS_PK ||
+	     auth_type == NL80211_AUTHTYPE_EPPKE) &&
 	    !info->attrs[NL80211_ATTR_AUTH_DATA])
 		return -EINVAL;
 
@@ -12540,7 +12557,8 @@ static int nl80211_authenticate(struct sk_buff *skb, struct genl_info *info)
 		if (auth_type != NL80211_AUTHTYPE_SAE &&
 		    auth_type != NL80211_AUTHTYPE_FILS_SK &&
 		    auth_type != NL80211_AUTHTYPE_FILS_SK_PFS &&
-		    auth_type != NL80211_AUTHTYPE_FILS_PK)
+		    auth_type != NL80211_AUTHTYPE_FILS_PK &&
+		    auth_type != NL80211_AUTHTYPE_EPPKE)
 			return -EINVAL;
 		req.auth_data = nla_data(info->attrs[NL80211_ATTR_AUTH_DATA]);
 		req.auth_data_len = nla_len(info->attrs[NL80211_ATTR_AUTH_DATA]);
@@ -13567,8 +13585,7 @@ static int nl80211_testmode_dump(struct sk_buff *skb,
 			goto out_err;
 		}
 	} else {
-		attrbuf = kcalloc(NUM_NL80211_ATTR, sizeof(*attrbuf),
-				  GFP_KERNEL);
+		attrbuf = kzalloc_objs(*attrbuf, NUM_NL80211_ATTR);
 		if (!attrbuf) {
 			err = -ENOMEM;
 			goto out_err;
@@ -14769,9 +14786,8 @@ static int nl80211_set_cqm_rssi(struct genl_info *info,
 	}
 
 	if (n_thresholds) {
-		cqm_config = kzalloc(struct_size(cqm_config, rssi_thresholds,
-						 n_thresholds),
-				     GFP_KERNEL);
+		cqm_config = kzalloc_flex(*cqm_config, rssi_thresholds,
+					  n_thresholds);
 		if (!cqm_config)
 			return -ENOMEM;
 
@@ -15399,7 +15415,7 @@ static int nl80211_parse_wowlan_nd(struct cfg80211_registered_device *rdev,
 	struct nlattr **tb;
 	int err;
 
-	tb = kcalloc(NUM_NL80211_ATTR, sizeof(*tb), GFP_KERNEL);
+	tb = kzalloc_objs(*tb, NUM_NL80211_ATTR);
 	if (!tb)
 		return -ENOMEM;
 
@@ -15515,9 +15531,8 @@ static int nl80211_set_wowlan(struct sk_buff *skb, struct genl_info *info)
 		if (n_patterns > wowlan->n_patterns)
 			return -EINVAL;
 
-		new_triggers.patterns = kcalloc(n_patterns,
-						sizeof(new_triggers.patterns[0]),
-						GFP_KERNEL);
+		new_triggers.patterns = kzalloc_objs(new_triggers.patterns[0],
+						     n_patterns);
 		if (!new_triggers.patterns)
 			return -ENOMEM;
 
@@ -15764,8 +15779,7 @@ static int nl80211_parse_coalesce_rule(struct cfg80211_registered_device *rdev,
 	if (n_patterns > coalesce->n_patterns)
 		return -EINVAL;
 
-	new_rule->patterns = kcalloc(n_patterns, sizeof(new_rule->patterns[0]),
-				     GFP_KERNEL);
+	new_rule->patterns = kzalloc_objs(new_rule->patterns[0], n_patterns);
 	if (!new_rule->patterns)
 		return -ENOMEM;
 
@@ -15843,8 +15857,7 @@ static int nl80211_set_coalesce(struct sk_buff *skb, struct genl_info *info)
 	if (n_rules > coalesce->n_rules)
 		return -EINVAL;
 
-	new_coalesce = kzalloc(struct_size(new_coalesce, rules, n_rules),
-			       GFP_KERNEL);
+	new_coalesce = kzalloc_flex(*new_coalesce, rules, n_rules);
 	if (!new_coalesce)
 		return -ENOMEM;
 
@@ -16005,7 +16018,7 @@ static int nl80211_register_beacons(struct sk_buff *skb, struct genl_info *info)
 	if (!(rdev->wiphy.flags & WIPHY_FLAG_REPORTS_OBSS))
 		return -EOPNOTSUPP;
 
-	nreg = kzalloc(sizeof(*nreg), GFP_KERNEL);
+	nreg = kzalloc_obj(*nreg);
 	if (!nreg)
 		return -ENOMEM;
 
@@ -16373,7 +16386,7 @@ static int handle_nan_filter(struct nlattr *attr_filter,
 
 	BUILD_BUG_ON(sizeof(*func->rx_filters) != sizeof(*func->tx_filters));
 
-	filter = kcalloc(n_entries, sizeof(*func->rx_filters), GFP_KERNEL);
+	filter = kzalloc_objs(*func->rx_filters, n_entries);
 	if (!filter)
 		return -ENOMEM;
 
@@ -16436,7 +16449,7 @@ static int nl80211_nan_add_func(struct sk_buff *skb,
 	if (err)
 		return err;
 
-	func = kzalloc(sizeof(*func), GFP_KERNEL);
+	func = kzalloc_obj(*func);
 	if (!func)
 		return -ENOMEM;
 
@@ -16575,8 +16588,7 @@ static int nl80211_nan_add_func(struct sk_buff *skb,
 
 			func->srf_num_macs = n_entries;
 			func->srf_macs =
-				kcalloc(n_entries, sizeof(*func->srf_macs),
-					GFP_KERNEL);
+				kzalloc_objs(*func->srf_macs, n_entries);
 			if (!func->srf_macs) {
 				err = -ENOMEM;
 				goto out;
@@ -17557,7 +17569,7 @@ static int nl80211_prepare_vendor_dump(struct sk_buff *skb,
 		return 0;
 	}
 
-	attrbuf = kcalloc(NUM_NL80211_ATTR, sizeof(*attrbuf), GFP_KERNEL);
+	attrbuf = kzalloc_objs(*attrbuf, NUM_NL80211_ATTR);
 	if (!attrbuf)
 		return -ENOMEM;
 
@@ -17788,7 +17800,7 @@ static int nl80211_set_qos_map(struct sk_buff *skb,
 		if (len % 2)
 			return -EINVAL;
 
-		qos_map = kzalloc(sizeof(struct cfg80211_qos_map), GFP_KERNEL);
+		qos_map = kzalloc_obj(struct cfg80211_qos_map);
 		if (!qos_map)
 			return -ENOMEM;
 
@@ -18423,8 +18435,7 @@ static int nl80211_set_tid_config(struct sk_buff *skb,
 			    rem_conf)
 		num_conf++;
 
-	tid_config = kzalloc(struct_size(tid_config, tid_conf, num_conf),
-			     GFP_KERNEL);
+	tid_config = kzalloc_flex(*tid_config, tid_conf, num_conf);
 	if (!tid_config)
 		return -ENOMEM;
 
@@ -18491,7 +18502,7 @@ static int nl80211_color_change(struct sk_buff *skb, struct genl_info *info)
 	if (err)
 		return err;
 
-	tb = kcalloc(NL80211_ATTR_MAX + 1, sizeof(*tb), GFP_KERNEL);
+	tb = kzalloc_objs(*tb, NL80211_ATTR_MAX + 1);
 	if (!tb)
 		return -ENOMEM;
 
@@ -19245,7 +19256,7 @@ static int nl80211_set_sar_specs(struct sk_buff *skb, struct genl_info *info)
 	if (specs > rdev->wiphy.sar_capa->num_freq_ranges)
 		return -EINVAL;
 
-	sar_spec = kzalloc(struct_size(sar_spec, sub_specs, specs), GFP_KERNEL);
+	sar_spec = kzalloc_flex(*sar_spec, sub_specs, specs);
 	if (!sar_spec)
 		return -ENOMEM;
 

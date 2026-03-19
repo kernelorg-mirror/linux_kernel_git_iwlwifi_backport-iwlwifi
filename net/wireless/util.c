@@ -1152,7 +1152,8 @@ void cfg80211_process_wdev_events(struct wireless_dev *wdev)
 			if (WARN_ON(wdev->iftype == NL80211_IFTYPE_NAN))
 				break;
 
-			cfg80211_leave_locked(wiphy_to_rdev(wdev->wiphy), wdev);
+			cfg80211_leave_locked(wiphy_to_rdev(wdev->wiphy), wdev,
+					      ev->link_id);
 			break;
 		case EVENT_PORT_AUTHORIZED:
 			__cfg80211_port_authorized(wdev, ev->pa.peer_addr,
@@ -1218,7 +1219,7 @@ int cfg80211_change_iface(struct cfg80211_registered_device *rdev,
 		dev->ieee80211_ptr->use_4addr = false;
 		rdev_set_qos_map(rdev, dev, NULL);
 
-		cfg80211_leave_locked(rdev, dev->ieee80211_ptr);
+		cfg80211_leave_locked(rdev, dev->ieee80211_ptr, -1);
 
 		cfg80211_process_rdev_events(rdev);
 		cfg80211_mlme_purge_registrations(dev->ieee80211_ptr);
@@ -1577,12 +1578,14 @@ static u32 cfg80211_calculate_bitrate_he(struct rate_info *rate)
 	tmp = result;
 	tmp *= SCALE;
 	do_div(tmp, mcs_divisors[rate->mcs]);
-	result = tmp;
 
 	/* and take NSS, DCM into account */
-	result = (result * rate->nss) / 8;
+	tmp *= rate->nss;
+	do_div(tmp, 8);
 	if (rate->he_dcm)
-		result /= 2;
+		do_div(tmp, 2);
+
+	result = tmp;
 
 	return result / 10000;
 }
@@ -2726,8 +2729,8 @@ bool cfg80211_does_bw_fit_range(const struct ieee80211_freq_range *freq_range,
 int cfg80211_link_sinfo_alloc_tid_stats(struct link_station_info *link_sinfo,
 					gfp_t gfp)
 {
-	link_sinfo->pertid = kcalloc(IEEE80211_NUM_TIDS + 1,
-				     sizeof(*link_sinfo->pertid), gfp);
+	link_sinfo->pertid = kzalloc_objs(*link_sinfo->pertid,
+					  IEEE80211_NUM_TIDS + 1, gfp);
 	if (!link_sinfo->pertid)
 		return -ENOMEM;
 
@@ -2737,9 +2740,8 @@ EXPORT_SYMBOL(cfg80211_link_sinfo_alloc_tid_stats);
 
 int cfg80211_sinfo_alloc_tid_stats(struct station_info *sinfo, gfp_t gfp)
 {
-	sinfo->pertid = kcalloc(IEEE80211_NUM_TIDS + 1,
-				sizeof(*(sinfo->pertid)),
-				gfp);
+	sinfo->pertid = kzalloc_objs(*(sinfo->pertid), IEEE80211_NUM_TIDS + 1,
+				     gfp);
 	if (!sinfo->pertid)
 		return -ENOMEM;
 

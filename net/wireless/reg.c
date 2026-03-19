@@ -461,8 +461,7 @@ reg_copy_regd(const struct ieee80211_regdomain *src_regd)
 	struct ieee80211_regdomain *regd;
 	unsigned int i;
 
-	regd = kzalloc(struct_size(regd, reg_rules, src_regd->n_reg_rules),
-		       GFP_KERNEL);
+	regd = kzalloc_flex(*regd, reg_rules, src_regd->n_reg_rules);
 	if (!regd)
 		return ERR_PTR(-ENOMEM);
 
@@ -519,7 +518,7 @@ static int reg_schedule_apply(const struct ieee80211_regdomain *regdom)
 {
 	struct reg_regdb_apply_request *request;
 
-	request = kzalloc(sizeof(struct reg_regdb_apply_request), GFP_KERNEL);
+	request = kzalloc_obj(struct reg_regdb_apply_request);
 	if (!request) {
 		kfree(regdom);
 		return -ENOMEM;
@@ -942,8 +941,7 @@ static int regdb_query_country(const struct fwdb_header *db,
 	struct ieee80211_regdomain *regdom;
 	unsigned int i;
 
-	regdom = kzalloc(struct_size(regdom, reg_rules, coll->n_rules),
-			 GFP_KERNEL);
+	regdom = kzalloc_flex(*regdom, reg_rules, coll->n_rules);
 	if (!regdom)
 		return -ENOMEM;
 
@@ -1109,7 +1107,7 @@ int reg_reload_regdb(void)
 	/* reset regulatory domain */
 	current_regdomain = get_cfg80211_regdom();
 
-	request = kzalloc(sizeof(*request), GFP_KERNEL);
+	request = kzalloc_obj(*request);
 	if (!request) {
 		err = -ENOMEM;
 		goto out_unlock;
@@ -1541,7 +1539,7 @@ regdom_intersect(const struct ieee80211_regdomain *rd1,
 	if (!num_rules)
 		return NULL;
 
-	rd = kzalloc(struct_size(rd, reg_rules, num_rules), GFP_KERNEL);
+	rd = kzalloc_flex(*rd, reg_rules, num_rules);
 	if (!rd)
 		return NULL;
 
@@ -2343,8 +2341,17 @@ static void reg_process_ht_flags(struct wiphy *wiphy)
 	if (!wiphy)
 		return;
 
-	for (band = 0; band < NUM_NL80211_BANDS; band++)
+	for (band = 0; band < NUM_NL80211_BANDS; band++) {
+		/*
+		 * Don't apply HT flags to channels within the S1G band.
+		 * Each bonded channel will instead be validated individually
+		 * within cfg80211_s1g_usable().
+		 */
+		if (band == NL80211_BAND_S1GHZ)
+			continue;
+
 		reg_process_ht_flags_band(wiphy, wiphy->bands[band]);
+	}
 }
 
 static bool reg_wdev_chan_valid(struct wiphy *wiphy, struct wireless_dev *wdev)
@@ -2472,7 +2479,7 @@ static void reg_leave_invalid_chans(struct wiphy *wiphy)
 		scoped_guard(wiphy, wiphy)
 			valid = reg_wdev_chan_valid(wiphy, wdev);
 		if (!valid)
-			cfg80211_leave(rdev, wdev);
+			cfg80211_leave(rdev, wdev, -1);
 	}
 }
 
@@ -3244,7 +3251,7 @@ static int regulatory_hint_core(const char *alpha2)
 {
 	struct regulatory_request *request;
 
-	request = kzalloc(sizeof(struct regulatory_request), GFP_KERNEL);
+	request = kzalloc_obj(struct regulatory_request);
 	if (!request)
 		return -ENOMEM;
 
@@ -3270,7 +3277,7 @@ int regulatory_hint_user(const char *alpha2,
 	if (!is_world_regdom(alpha2) && !is_an_alpha2(alpha2))
 		return -EINVAL;
 
-	request = kzalloc(sizeof(struct regulatory_request), GFP_KERNEL);
+	request = kzalloc_obj(struct regulatory_request);
 	if (!request)
 		return -ENOMEM;
 
@@ -3340,7 +3347,7 @@ int regulatory_hint(struct wiphy *wiphy, const char *alpha2)
 
 	wiphy->regulatory_flags &= ~REGULATORY_CUSTOM_REG;
 
-	request = kzalloc(sizeof(struct regulatory_request), GFP_KERNEL);
+	request = kzalloc_obj(struct regulatory_request);
 	if (!request)
 		return -ENOMEM;
 
@@ -3373,7 +3380,7 @@ void regulatory_hint_country_ie(struct wiphy *wiphy, enum nl80211_band band,
 	if (country_ie_len < IEEE80211_COUNTRY_IE_MIN_LEN)
 		return;
 
-	request = kzalloc(sizeof(*request), GFP_KERNEL);
+	request = kzalloc_obj(*request);
 	if (!request)
 		return;
 
@@ -3686,7 +3693,7 @@ void regulatory_hint_found_beacon(struct wiphy *wiphy,
 	if (processing)
 		return;
 
-	reg_beacon = kzalloc(sizeof(struct reg_beacon), gfp);
+	reg_beacon = kzalloc_obj(struct reg_beacon, gfp);
 	if (!reg_beacon)
 		return;
 
