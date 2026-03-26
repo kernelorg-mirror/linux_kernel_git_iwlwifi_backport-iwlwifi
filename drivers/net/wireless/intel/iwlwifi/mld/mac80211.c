@@ -355,6 +355,22 @@ static void iwl_mld_hw_set_nan(struct iwl_mld *mld)
 	hw->wiphy->nan_capa.phy.he = mld->nvm_data->nan_phy_capa.he;
 }
 
+static bool iwl_mld_is_cip_supported(struct iwl_mld *mld)
+{
+	if (CSR_HW_RFID_TYPE(mld->trans->info.hw_rf_id) != IWL_CFG_RF_TYPE_PE)
+		return false;
+
+#ifdef CPTCFG_IWLWIFI_SUPPORT_DEBUG_OVERRIDES
+	return mld->trans->dbg_cfg.MLD_CIP_ENABLED;
+#else
+	/*
+	 * There is no D3 rekey support for the CIGTK,
+	 * this can be enabled once the firmware fully supports the feature.
+	 */
+	return false;
+#endif
+}
+
 static void iwl_mac_hw_set_wiphy(struct iwl_mld *mld)
 {
 	struct ieee80211_hw *hw = mld->hw;
@@ -494,6 +510,11 @@ static void iwl_mac_hw_set_wiphy(struct iwl_mld *mld)
 	mld->ext_capab[0].ext_mld_capa_and_ops =
 		IEEE80211_UHR_ML_EXT_MLD_CAPA_ML_PM;
 
+	if (iwl_mld_is_cip_supported(mld)) {
+		/* The hardware does not need any delays */
+		mld->ext_capab[0].cip_supported = true;
+		mld->ext_capab[0].cip_capabilities = 0;
+	}
 }
 
 static void iwl_mac_hw_set_misc(struct iwl_mld *mld)
