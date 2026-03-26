@@ -5475,6 +5475,9 @@ static const struct wiphy_iftype_ext_capab mac80211_hwsim_iftypes_ext_capa[] = {
 		.eml_capabilities = IEEE80211_EML_CAP_EMLSR_SUPP |
 				    IEEE80211_EML_CAP_EMLMR_SUPPORT,
 		.mld_capa_and_ops = MAC80211_HWSIM_MLD_CAPA_OPS,
+		/* CIP works as hwsim does not have control frames */
+		.cip_supported = true,
+		.cip_capabilities = 0,
 	},
 };
 
