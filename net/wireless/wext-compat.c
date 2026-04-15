@@ -7,7 +7,7 @@
  * we directly assign the wireless handlers of wireless interfaces.
  *
  * Copyright 2008-2009	Johannes Berg <johannes@sipsolutions.net>
- * Copyright (C) 2019-2023, 2025 Intel Corporation
+ * Copyright (C) 2019-2023, 2025-2026 Intel Corporation
  */
 
 #include <linux/export.h>
@@ -490,7 +490,8 @@ static int cfg80211_set_encryption(struct cfg80211_registered_device *rdev,
 	if (addr)
 		tx_key = false;
 
-	if (cfg80211_validate_key_settings(rdev, params, idx, pairwise, addr))
+	if (cfg80211_validate_key_settings(rdev, wdev, params, idx,
+					   pairwise, addr))
 		return -EINVAL;
 
 	err = 0;
