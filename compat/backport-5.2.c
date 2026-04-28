@@ -480,16 +480,16 @@ int __nla_parse(struct nlattr **tb, int maxtype,
 }
 EXPORT_SYMBOL(__nla_parse);
 
-ssize_t strscpy_pad(char *dest, const char *src, size_t count)
+ssize_t backport_strscpy_pad(char *dest, const char *src, size_t count)
 {
-	ssize_t written;
+        ssize_t written;
 
-	written = strscpy(dest, src, count);
-	if (written < 0 || written == count - 1)
-		return written;
+        written = strscpy(dest, src, count);
+        if (written < 0 || written == count - 1)
+                return written;
 
-	memset(dest + written + 1, 0, count - written - 1);
+        memset(dest + written + 1, 0, count - written - 1);
 
-	return written;
+        return written;
 }
-EXPORT_SYMBOL(strscpy_pad);
+EXPORT_SYMBOL(backport_strscpy_pad);

@@ -29,8 +29,10 @@ void cfg80211_chandef_create(struct cfg80211_chan_def *chandef,
 
 	*chandef = (struct cfg80211_chan_def) {
 		.chan = chan,
-		.freq1_offset = chan->freq_offset,
 	};
+
+	WARN_ON(chan->band == NL80211_BAND_60GHZ ||
+		chan->band == NL80211_BAND_S1GHZ);
 
 	switch (chan_type) {
 	case NL80211_CHAN_NO_HT:
@@ -403,6 +405,14 @@ bool cfg80211_chandef_valid(const struct cfg80211_chan_def *chandef)
 		return false;
 
 	control_freq = chandef->chan->center_freq;
+
+	if (cfg80211_chandef_is_s1g(chandef) &&
+	    chandef->width != NL80211_CHAN_WIDTH_1 &&
+	    chandef->width != NL80211_CHAN_WIDTH_2 &&
+	    chandef->width != NL80211_CHAN_WIDTH_4 &&
+	    chandef->width != NL80211_CHAN_WIDTH_8 &&
+	    chandef->width != NL80211_CHAN_WIDTH_16)
+		return false;
 
 	switch (chandef->width) {
 	case NL80211_CHAN_WIDTH_5:
@@ -887,6 +897,33 @@ void cfg80211_set_dfs_state(struct wiphy *wiphy,
 
 		c->dfs_state = dfs_state;
 		c->dfs_state_entered = jiffies;
+	}
+}
+
+void cfg80211_set_cac_state(struct wiphy *wiphy,
+			    const struct cfg80211_chan_def *chandef,
+			    bool cac_ongoing)
+{
+	struct ieee80211_channel *c;
+	int width;
+	u64 cac_time;
+
+	if (WARN_ON(!cfg80211_chandef_valid(chandef)))
+		return;
+
+	width = cfg80211_chandef_get_width(chandef);
+	if (width < 0)
+		return;
+
+	/* Get the same timestamp for all subchannels */
+	cac_time = cac_ongoing ? ktime_get_boottime_ns() : 0;
+
+	for_each_subchan(chandef, freq, cf) {
+		c = ieee80211_get_channel_khz(wiphy, freq);
+		if (!c)
+			continue;
+
+		c->cac_start_time = cac_time;
 	}
 }
 

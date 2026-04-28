@@ -1476,8 +1476,7 @@ void cfg80211_update_iface_num(struct cfg80211_registered_device *rdev,
 }
 
 void cfg80211_leave_locked(struct cfg80211_registered_device *rdev,
-			   struct wireless_dev *wdev,
-			   int link_id)
+			   struct wireless_dev *wdev, int link_id)
 {
 	struct net_device *dev = wdev->netdev;
 	struct cfg80211_sched_scan_request *pos, *tmp;
@@ -1540,8 +1539,7 @@ void cfg80211_leave_locked(struct cfg80211_registered_device *rdev,
 }
 
 void cfg80211_leave(struct cfg80211_registered_device *rdev,
-		    struct wireless_dev *wdev,
-		    int link_id)
+		    struct wireless_dev *wdev, int link_id)
 {
 	ASSERT_RTNL();
 

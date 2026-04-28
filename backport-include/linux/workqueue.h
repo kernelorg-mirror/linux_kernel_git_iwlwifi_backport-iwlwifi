@@ -6,4 +6,7 @@
 #define system_dfl_wq system_unbound_wq
 #endif
 
+#if LINUX_VERSION_IS_LESS(7,1,0)
+#define system_percpu_wq system_wq
+#endif
 #endif /* __BACKPORT_LINUX_WORKQUEUE_H */
