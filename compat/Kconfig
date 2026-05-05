@@ -54,13 +54,13 @@
 #
 
 config BP_MODULES
-	option modules
+	modules
 	bool
 	default MODULES
 
 	help
 	This symbol is necessary for the newer kconf tool, it looks
-	for the "option modules" to control the 'm' state.
+	for the "modules" directive to control the 'm' state.
 
 config BPAUTO_BUILD_NLATTR
 	def_bool y

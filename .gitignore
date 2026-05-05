@@ -28,3 +28,6 @@ ncscope.*
 *.gcno
 *.dwo
 .vscode/
+include/config/
+backport-include/generated/autoconf-bp.h
+backport-include/generated/rustc_cfg-bp

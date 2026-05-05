@@ -22,6 +22,8 @@ endif
 .SUFFIXES:
 
 export CONFIG_=CPTCFG_
+export KCONFIG_AUTOHEADER=backport-include/generated/autoconf-bp.h
+export KCONFIG_RUSTCCFG=backport-include/generated/rustc_cfg-bp
 
 .PHONY: menuconfig
 menuconfig:
