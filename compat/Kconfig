@@ -53,6 +53,17 @@
 # Variations are obviously possible.
 #
 
+comma		:= ,
+left_paren	:= (
+
+# $(if-success,<command>,<then>,<else>)
+# Return <then> if <command> exits with 0, <else> otherwise.
+if-success = $(shell,{ $(1); } >/dev/null 2>&1 && echo "$(2)" || echo "$(3)")
+
+# $(success,<command>)
+# Return y if <command> exits with 0, n otherwise
+success = $(if-success,$(1),y,n)
+
 config BP_MODULES
 	modules
 	bool
@@ -61,6 +72,9 @@ config BP_MODULES
 	help
 	This symbol is necessary for the newer kconf tool, it looks
 	for the "modules" directive to control the 'm' state.
+
+config KERNEL_HAS_SPINLOCK_BH_GUARD
+	def_bool $(success,grep -q DEFINE_LOCK_GUARD_1\$(left_paren)spinlock_bh$(comma) $(KLIB_BUILD)/include/linux/spinlock.h)
 
 config BPAUTO_BUILD_NLATTR
 	def_bool y

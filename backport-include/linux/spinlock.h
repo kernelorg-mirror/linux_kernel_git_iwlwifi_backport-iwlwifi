@@ -29,8 +29,7 @@ int __alloc_bucket_spinlocks(spinlock_t **locks, unsigned int *lock_mask,
 #endif /* LINUX_VERSION_IS_LESS(4,19,0) */
 
 
-#if LINUX_VERSION_IS_LESS(6,15,0) &&			\
-	!LINUX_VERSION_IN_RANGE(6,12,38, 6,13,0)
+#ifndef CPTCFG_KERNEL_HAS_SPINLOCK_BH_GUARD
 #include <linux/cleanup.h>
 DEFINE_LOCK_GUARD_1(spinlock_bh, spinlock_t,
 		    spin_lock_bh(_T->lock),
@@ -38,9 +37,7 @@ DEFINE_LOCK_GUARD_1(spinlock_bh, spinlock_t,
 
 DEFINE_LOCK_GUARD_1_COND(spinlock_bh, _try,
 			 spin_trylock_bh(_T->lock))
-
-#endif /* LINUX_VERSION_IS_LESS(6,15,0) &&
-	  !LINUX_VERSION_IN_RANGE(6,12,38, 6,13,0) */
+#endif
 
 #if LINUX_VERSION_IS_LESS(6,5,0) &&			\
 	!LINUX_VERSION_IN_RANGE(5,15,195, 5,16,0) &&	\
