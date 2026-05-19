@@ -4435,8 +4435,8 @@ static const struct ieee80211_sband_iftype_data sband_capa_2ghz[] = {
 			.mac.mac_cap = {
 				[0] = IEEE80211_UHR_MAC_CAP0_NPCA_SUPP,
 			},
-			.phy.cap = IEEE80211_UHR_PHY_CAP_ELR_RX |
-				   IEEE80211_UHR_PHY_CAP_ELR_TX,
+			.phy.cap = cpu_to_le32(IEEE80211_UHR_PHY_CAP_ELR_RX |
+					       IEEE80211_UHR_PHY_CAP_ELR_TX),
 		},
 	},
 	{
@@ -4551,8 +4551,8 @@ static const struct ieee80211_sband_iftype_data sband_capa_2ghz[] = {
 			.mac.mac_cap = {
 				[0] = IEEE80211_UHR_MAC_CAP0_NPCA_SUPP,
 			},
-			.phy.cap = IEEE80211_UHR_PHY_CAP_ELR_RX |
-				   IEEE80211_UHR_PHY_CAP_ELR_TX,
+			.phy.cap = cpu_to_le32(IEEE80211_UHR_PHY_CAP_ELR_RX |
+					       IEEE80211_UHR_PHY_CAP_ELR_TX),
 		},
 	},
 #ifdef CPTCFG_MAC80211_MESH
@@ -4729,8 +4729,7 @@ static const struct ieee80211_sband_iftype_data sband_capa_5ghz[] = {
 				[0] = IEEE80211_UHR_MAC_CAP0_NPCA_SUPP,
 				[1] = IEEE80211_UHR_MAC_CAP1_DBE_SUPP,
 			},
-			.phy.cap = IEEE80211_UHR_PHY_CAP_ELR_RX |
-				   IEEE80211_UHR_PHY_CAP_ELR_TX,
+			.phy.cap = cpu_to_le32(IEEE80211_UHR_PHY_CAP_ELR_TX),
 		},
 	},
 	{
@@ -4863,8 +4862,7 @@ static const struct ieee80211_sband_iftype_data sband_capa_5ghz[] = {
 				[0] = IEEE80211_UHR_MAC_CAP0_NPCA_SUPP,
 				[1] = IEEE80211_UHR_MAC_CAP1_DBE_SUPP,
 			},
-			.phy.cap = IEEE80211_UHR_PHY_CAP_ELR_RX |
-				   IEEE80211_UHR_PHY_CAP_ELR_TX,
+			.phy.cap = cpu_to_le32(IEEE80211_UHR_PHY_CAP_ELR_RX),
 		},
 	},
 #ifdef CPTCFG_MAC80211_MESH
@@ -5065,8 +5063,7 @@ static const struct ieee80211_sband_iftype_data sband_capa_6ghz[] = {
 				[0] = IEEE80211_UHR_MAC_CAP0_NPCA_SUPP,
 				[1] = IEEE80211_UHR_MAC_CAP1_DBE_SUPP,
 			},
-			.phy.cap = IEEE80211_UHR_PHY_CAP_ELR_RX |
-				   IEEE80211_UHR_PHY_CAP_ELR_TX,
+			.phy.cap = cpu_to_le32(IEEE80211_UHR_PHY_CAP_ELR_TX),
 		},
 	},
 	{
@@ -5220,8 +5217,7 @@ static const struct ieee80211_sband_iftype_data sband_capa_6ghz[] = {
 				[0] = IEEE80211_UHR_MAC_CAP0_NPCA_SUPP,
 				[1] = IEEE80211_UHR_MAC_CAP1_DBE_SUPP,
 			},
-			.phy.cap = IEEE80211_UHR_PHY_CAP_ELR_RX |
-				   IEEE80211_UHR_PHY_CAP_ELR_TX,
+			.phy.cap = cpu_to_le32(IEEE80211_UHR_PHY_CAP_ELR_RX),
 		},
 	},
 #ifdef CPTCFG_MAC80211_MESH
@@ -5320,8 +5316,8 @@ static const struct ieee80211_sband_iftype_data sband_capa_6ghz[] = {
 				[0] = IEEE80211_UHR_MAC_CAP0_NPCA_SUPP,
 				[1] = IEEE80211_UHR_MAC_CAP1_DBE_SUPP,
 			},
-			.phy.cap = IEEE80211_UHR_PHY_CAP_ELR_RX |
-				   IEEE80211_UHR_PHY_CAP_ELR_TX,
+			.phy.cap = cpu_to_le32(IEEE80211_UHR_PHY_CAP_ELR_RX |
+					       IEEE80211_UHR_PHY_CAP_ELR_TX),
 		},
 	},
 #endif
