@@ -160,7 +160,8 @@ static SIMPLE_DEV_PM_OPS(wiphy_pm_ops, wiphy_suspend, wiphy_resume);
 #define WIPHY_PM_OPS NULL
 #endif
 
-#if LINUX_VERSION_IS_GEQ(7,0,1)
+#if LINUX_VERSION_IS_GEQ(7,0,0) && !defined(CPTCFG_IWLWIFI_SIMULATION)
+/* vlab uses 7.0-rc3 which doesn't want this backport. 7.0 does need it */
 static const struct ns_common *wiphy_namespace(const struct device *d)
 {
 	struct wiphy *wiphy = container_of(d, struct wiphy, dev);
