@@ -76,6 +76,9 @@ config BP_MODULES
 config KERNEL_HAS_SPINLOCK_BH_GUARD
 	def_bool $(success,grep -q DEFINE_LOCK_GUARD_1\$(left_paren)spinlock_bh$(comma) $(KLIB_BUILD)/include/linux/spinlock.h)
 
+config KERNEL_HAS_GENLMSG_MULTICAST_ALLNS_GFP
+	def_bool $(success,grep -A5 'int genlmsg_multicast_allns' $(KLIB_BUILD)/include/net/genetlink.h | grep -q gfp_t)
+
 config BPAUTO_BUILD_NLATTR
 	def_bool y
 	depends on KERNEL_5_2

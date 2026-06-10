@@ -187,14 +187,8 @@ static inline int genlmsg_parse(const struct nlmsghdr *nlh,
 	return __nlmsg_parse(nlh, family->hdrsize + GENL_HDRLEN, tb, maxtype,
 			     policy, NL_VALIDATE_STRICT, extack);
 }
-#elif LINUX_VERSION_IS_LESS(6,11,6) &&			\
-	!LINUX_VERSION_IN_RANGE(5,4,285, 5,5,0) &&	\
-	!LINUX_VERSION_IN_RANGE(5,10,229, 5,11,0) &&	\
-	!LINUX_VERSION_IN_RANGE(5,15,170, 5,16,0) &&	\
-	!LINUX_VERSION_IN_RANGE(6,1,115, 6,2,0) &&	\
-	!LINUX_VERSION_IN_RANGE(6,6,59, 6,7,0) &&	\
-	!LINUX_VERSION_IN_RANGE(6,8,12, 6,9,0)
-static inline 
+#elif defined(CPTCFG_KERNEL_HAS_GENLMSG_MULTICAST_ALLNS_GFP)
+static inline
 int backport_genlmsg_multicast_allns(const struct genl_family *family,
 				     struct sk_buff *skb, u32 portid,
 				     unsigned int group)
