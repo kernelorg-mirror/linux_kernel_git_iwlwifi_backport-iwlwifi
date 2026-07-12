@@ -115,7 +115,7 @@ hwsim_nan_rx_chandef_compatible(struct mac80211_hwsim_data *data, u8 slot,
 	    sched_chandef.chan->center_freq != rx_chan->center_freq)
 		return false;
 
-	if (rx_bw >= ARRAY_SIZE(bw_to_mhz) ||!bw_to_mhz[rx_bw])
+	if (rx_bw >= ARRAY_SIZE(bw_to_mhz) || !bw_to_mhz[rx_bw])
 		return false;
 
 	rx_mhz = bw_to_mhz[rx_bw];

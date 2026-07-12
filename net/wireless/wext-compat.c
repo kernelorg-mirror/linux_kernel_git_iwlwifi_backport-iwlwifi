@@ -16,6 +16,7 @@
 #include <linux/if_arp.h>
 #include <linux/etherdevice.h>
 #include <linux/slab.h>
+#include <linux/string.h>
 #include <net/iw_handler.h>
 #include <net/cfg80211.h>
 #include <net/cfg80211-wext.h>
@@ -27,7 +28,7 @@ int cfg80211_wext_giwname(struct net_device *dev,
 			  struct iw_request_info *info,
 			  union iwreq_data *wrqu, char *extra)
 {
-	strcpy(wrqu->name, "IEEE 802.11");
+	strscpy(wrqu->name, "IEEE 802.11");
 	return 0;
 }
 
@@ -790,6 +791,8 @@ static int cfg80211_wext_siwfreq(struct net_device *dev,
 		chandef.center_freq1 = freq;
 		chandef.chan = ieee80211_get_channel(&rdev->wiphy, freq);
 		if (!chandef.chan)
+			return -EINVAL;
+		if (!cfg80211_chandef_valid(&chandef))
 			return -EINVAL;
 		return cfg80211_set_monitor_channel(rdev, dev, &chandef);
 	case NL80211_IFTYPE_MESH_POINT:

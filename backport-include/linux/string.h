@@ -38,6 +38,13 @@ ssize_t backport_strscpy_pad(char *dest, const char *src, size_t count);
 #define __bp_strscpy_pad1(dst, src, size)	__bp_strscpy_pad3(dst, src, size)
 #define strscpy_pad(dst, src, ...)	\
 	CONCATENATE(__bp_strscpy_pad, COUNT_ARGS(__VA_ARGS__))(dst, src, __VA_ARGS__)
+
+/* Allow 2-argument strscpy() where size is inferred from the dest array */
+#undef strscpy
+#define __bp_strscpy0(dst, src, ...)	strscpy(dst, src, sizeof(dst) + __must_be_array(dst))
+#define __bp_strscpy1(dst, src, size)	strscpy(dst, src, size)
+#define strscpy(dst, src, ...)	\
+	CONCATENATE(__bp_strscpy, COUNT_ARGS(__VA_ARGS__))(dst, src, __VA_ARGS__)
 #endif
 
 #if LINUX_VERSION_IS_LESS(6,10,0)

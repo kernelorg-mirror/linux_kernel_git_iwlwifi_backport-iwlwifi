@@ -359,6 +359,14 @@ static struct net_device *hwsim_mon; /* global monitor netdev */
 	.hw_value = (_freq), \
 }
 
+#define CHANS1G(_freq, _offset, _flags) { \
+	.band = NL80211_BAND_S1GHZ, \
+	.center_freq = (_freq), \
+	.freq_offset = (_offset), \
+	.hw_value = (_freq), \
+	.flags = (_flags), \
+}
+
 static const struct ieee80211_channel hwsim_channels_2ghz[] = {
 	CHAN2G(2412), /* Channel 1 */
 	CHAN2G(2417), /* Channel 2 */
@@ -498,7 +506,38 @@ static const struct ieee80211_channel hwsim_channels_6ghz[] = {
 static_assert(HWSIM_NUM_CHANNELS_6GHZ == ARRAY_SIZE(hwsim_channels_6ghz),
 	      "Inconsistent 6 GHz channel count");
 
-static struct ieee80211_channel hwsim_channels_s1g[HWSIM_NUM_S1G_CHANNELS_US];
+/*
+ * US 2024 channels (op class 1). Additionally to emulate real world
+ * US operation, the edgeband 1MHz channels (1, 51) are marked as NO_PRIMARY.
+ */
+static const struct ieee80211_channel hwsim_channels_s1g[] = {
+	CHANS1G(902, 500, IEEE80211_CHAN_S1G_NO_PRIMARY), /* Channel 1 */
+	CHANS1G(903, 500, 0), /* Channel 3 */
+	CHANS1G(904, 500, 0), /* Channel 5 */
+	CHANS1G(905, 500, 0), /* Channel 7 */
+	CHANS1G(906, 500, 0), /* Channel 9 */
+	CHANS1G(907, 500, 0), /* Channel 11 */
+	CHANS1G(908, 500, 0), /* Channel 13 */
+	CHANS1G(909, 500, 0), /* Channel 15 */
+	CHANS1G(910, 500, 0), /* Channel 17 */
+	CHANS1G(911, 500, 0), /* Channel 19 */
+	CHANS1G(912, 500, 0), /* Channel 21 */
+	CHANS1G(913, 500, 0), /* Channel 23 */
+	CHANS1G(914, 500, 0), /* Channel 25 */
+	CHANS1G(915, 500, 0), /* Channel 27 */
+	CHANS1G(916, 500, 0), /* Channel 29 */
+	CHANS1G(917, 500, 0), /* Channel 31 */
+	CHANS1G(918, 500, 0), /* Channel 33 */
+	CHANS1G(919, 500, 0), /* Channel 35 */
+	CHANS1G(920, 500, 0), /* Channel 37 */
+	CHANS1G(921, 500, 0), /* Channel 39 */
+	CHANS1G(922, 500, 0), /* Channel 41 */
+	CHANS1G(923, 500, 0), /* Channel 43 */
+	CHANS1G(924, 500, 0), /* Channel 45 */
+	CHANS1G(925, 500, 0), /* Channel 47 */
+	CHANS1G(926, 500, 0), /* Channel 49 */
+	CHANS1G(927, 500, IEEE80211_CHAN_S1G_NO_PRIMARY), /* Channel 51 */
+};
 
 static const struct ieee80211_sta_s1g_cap hwsim_s1g_cap = {
 	.s1g = true,
@@ -526,19 +565,6 @@ static const struct ieee80211_sta_s1g_cap hwsim_s1g_cap = {
 	/* Tx Single spatial stream and S1G-MCS Map for 1MHz */
 		     0 },
 };
-
-static void hwsim_init_s1g_channels(struct ieee80211_channel *chans)
-{
-	int ch, freq;
-
-	for (ch = 0; ch < ARRAY_SIZE(hwsim_channels_s1g); ch++) {
-		freq = 902000 + (ch + 1) * 500;
-		chans[ch].band = NL80211_BAND_S1GHZ;
-		chans[ch].center_freq = KHZ_TO_MHZ(freq);
-		chans[ch].freq_offset = freq % 1000;
-		chans[ch].hw_value = ch + 1;
-	}
-}
 
 static const struct ieee80211_rate hwsim_rates[] = {
 	{ .bitrate = 10 },
@@ -746,6 +772,17 @@ hwsim_ftm_result_policy[NL80211_PMSR_FTM_RESP_ATTR_MAX + 1] = {
 	[NL80211_PMSR_FTM_RESP_ATTR_DIST_SPREAD] = { .type = NLA_U64 },
 	[NL80211_PMSR_FTM_RESP_ATTR_LCI] = { .type = NLA_STRING },
 	[NL80211_PMSR_FTM_RESP_ATTR_CIVICLOC] = { .type = NLA_STRING },
+	[NL80211_PMSR_FTM_RESP_ATTR_TX_LTF_REPETITION_COUNT] = { .type = NLA_U32 },
+	[NL80211_PMSR_FTM_RESP_ATTR_RX_LTF_REPETITION_COUNT] = { .type = NLA_U32 },
+	[NL80211_PMSR_FTM_RESP_ATTR_MAX_TIME_BETWEEN_MEASUREMENTS] = { .type = NLA_U32 },
+	[NL80211_PMSR_FTM_RESP_ATTR_MIN_TIME_BETWEEN_MEASUREMENTS] = { .type = NLA_U32 },
+	[NL80211_PMSR_FTM_RESP_ATTR_NUM_TX_SPATIAL_STREAMS] = { .type = NLA_U8 },
+	[NL80211_PMSR_FTM_RESP_ATTR_NUM_RX_SPATIAL_STREAMS] = { .type = NLA_U8 },
+	[NL80211_PMSR_FTM_RESP_ATTR_NOMINAL_TIME] = { .type = NLA_U32 },
+	[NL80211_PMSR_FTM_RESP_ATTR_AVAILABILITY_WINDOW] = { .type = NLA_U32 },
+	[NL80211_PMSR_FTM_RESP_ATTR_CHANNEL_WIDTH] = { .type = NLA_U32 },
+	[NL80211_PMSR_FTM_RESP_ATTR_PREAMBLE] = { .type = NLA_U32 },
+	[NL80211_PMSR_FTM_RESP_ATTR_IS_DELAYED_LMR] = { .type = NLA_FLAG },
 };
 
 static const struct nla_policy
@@ -780,6 +817,19 @@ hwsim_pmsr_peers_result_policy[NL80211_PMSR_ATTR_MAX + 1] = {
 };
 
 static const struct nla_policy
+hwsim_ftm_role_capa_policy[NL80211_PMSR_FTM_CAPA_ATTR_MAX + 1] = {
+	[NL80211_PMSR_FTM_CAPA_ATTR_SUPPORT_NTB] = { .type = NLA_FLAG },
+	[NL80211_PMSR_FTM_CAPA_ATTR_SUPPORT_TB] = { .type = NLA_FLAG },
+	[NL80211_PMSR_FTM_CAPA_ATTR_SUPPORT_EDCA] = { .type = NLA_FLAG },
+};
+
+static const struct nla_policy
+hwsim_ftm_type_capa_policy[NL80211_PMSR_FTM_TYPE_CAPA_ATTR_MAX + 1] = {
+	[NL80211_PMSR_FTM_TYPE_CAPA_ATTR_INFRA_SUPPORT] = { .type = NLA_FLAG },
+	[NL80211_PMSR_FTM_TYPE_CAPA_ATTR_PD_SUPPORT] = { .type = NLA_FLAG },
+};
+
+static const struct nla_policy
 hwsim_ftm_capa_policy[NL80211_PMSR_FTM_CAPA_ATTR_MAX + 1] = {
 	[NL80211_PMSR_FTM_CAPA_ATTR_ASAP] = { .type = NLA_FLAG },
 	[NL80211_PMSR_FTM_CAPA_ATTR_NON_ASAP] = { .type = NLA_FLAG },
@@ -791,6 +841,19 @@ hwsim_ftm_capa_policy[NL80211_PMSR_FTM_CAPA_ATTR_MAX + 1] = {
 	[NL80211_PMSR_FTM_CAPA_ATTR_MAX_FTMS_PER_BURST] = NLA_POLICY_MAX(NLA_U8, 31),
 	[NL80211_PMSR_FTM_CAPA_ATTR_TRIGGER_BASED] = { .type = NLA_FLAG },
 	[NL80211_PMSR_FTM_CAPA_ATTR_NON_TRIGGER_BASED] = { .type = NLA_FLAG },
+	[NL80211_PMSR_FTM_CAPA_ATTR_MAX_NUM_TX_ANTENNAS] = { .type = NLA_U8 },
+	[NL80211_PMSR_FTM_CAPA_ATTR_MAX_NUM_RX_ANTENNAS] = { .type = NLA_U8 },
+	[NL80211_PMSR_FTM_CAPA_ATTR_MIN_INTERVAL_EDCA] = { .type = NLA_U32 },
+	[NL80211_PMSR_FTM_CAPA_ATTR_MIN_INTERVAL_NTB] = { .type = NLA_U32 },
+	[NL80211_PMSR_FTM_CAPA_ATTR_PD_PREAMBLES] = { .type = NLA_U32 },
+	[NL80211_PMSR_FTM_CAPA_ATTR_PD_BANDWIDTHS] = { .type = NLA_U32 },
+	[NL80211_PMSR_FTM_CAPA_ATTR_ISTA_CAPS] =
+		NLA_POLICY_NESTED(hwsim_ftm_role_capa_policy),
+	[NL80211_PMSR_FTM_CAPA_ATTR_RSTA_CAPS] =
+		NLA_POLICY_NESTED(hwsim_ftm_role_capa_policy),
+	[NL80211_PMSR_FTM_CAPA_ATTR_TYPE_CAPS] =
+		NLA_POLICY_NESTED(hwsim_ftm_type_capa_policy),
+	[NL80211_PMSR_FTM_CAPA_ATTR_CONCURRENT_ISTA_RSTA_SUPPORT] = { .type = NLA_FLAG },
 };
 
 static const struct nla_policy
@@ -2791,7 +2854,10 @@ static int mac80211_hwsim_sta_add(struct ieee80211_hw *hw,
 
 	hwsim_check_magic(vif);
 	hwsim_set_sta_magic(sta);
-	mac80211_hwsim_sta_rc_update(hw, vif, &sta->deflink, 0);
+
+	/* For now, don't run RC update on STAs on an S1G interface */
+	if (!vif->cfg.s1g)
+		mac80211_hwsim_sta_rc_update(hw, vif, &sta->deflink, 0);
 
 	if (sta->valid_links) {
 		WARN(hweight16(sta->valid_links) > 1,
@@ -3574,6 +3640,47 @@ static int mac80211_hwsim_send_pmsr_ftm_request_peer(struct sk_buff *msg,
 	if (nla_put_u8(msg, NL80211_PMSR_FTM_REQ_ATTR_BSS_COLOR, request->bss_color))
 		return -ENOBUFS;
 
+	if (request->min_time_between_measurements &&
+	    nla_put_u32(msg, NL80211_PMSR_FTM_REQ_ATTR_MIN_TIME_BETWEEN_MEASUREMENTS,
+			request->min_time_between_measurements))
+		return -ENOBUFS;
+
+	if (request->max_time_between_measurements &&
+	    nla_put_u32(msg, NL80211_PMSR_FTM_REQ_ATTR_MAX_TIME_BETWEEN_MEASUREMENTS,
+			request->max_time_between_measurements))
+		return -ENOBUFS;
+
+	if (request->availability_window &&
+	    nla_put_u8(msg, NL80211_PMSR_FTM_REQ_ATTR_AW_DURATION,
+		       request->availability_window))
+		return -ENOBUFS;
+
+	if (request->nominal_time &&
+	    nla_put_u32(msg, NL80211_PMSR_FTM_REQ_ATTR_NOMINAL_TIME,
+			request->nominal_time))
+		return -ENOBUFS;
+
+	if (request->num_measurements &&
+	    nla_put_u32(msg, NL80211_PMSR_FTM_REQ_ATTR_NUM_MEASUREMENTS,
+			request->num_measurements))
+		return -ENOBUFS;
+
+	if (request->ingress_distance &&
+	    nla_put_u64_64bit(msg, NL80211_PMSR_FTM_REQ_ATTR_INGRESS,
+			      request->ingress_distance,
+			      NL80211_PMSR_FTM_REQ_ATTR_PAD))
+		return -ENOBUFS;
+
+	if (request->egress_distance &&
+	    nla_put_u64_64bit(msg, NL80211_PMSR_FTM_REQ_ATTR_EGRESS,
+			      request->egress_distance,
+			      NL80211_PMSR_FTM_REQ_ATTR_PAD))
+		return -ENOBUFS;
+
+	if (request->pd_suppress_range_results &&
+	    nla_put_flag(msg, NL80211_PMSR_FTM_REQ_ATTR_PD_SUPPRESS_RESULTS))
+		return -ENOBUFS;
+
 	nla_nest_end(msg, ftm);
 
 	return 0;
@@ -3943,6 +4050,69 @@ static int mac80211_hwsim_parse_ftm_result(struct nlattr *ftm,
 		result->civicloc_len = nla_len(tb[NL80211_PMSR_FTM_RESP_ATTR_CIVICLOC]);
 	}
 
+	if (tb[NL80211_PMSR_FTM_RESP_ATTR_TX_LTF_REPETITION_COUNT]) {
+		result->tx_ltf_repetition_count_valid = 1;
+		result->tx_ltf_repetition_count =
+			nla_get_u32(tb[NL80211_PMSR_FTM_RESP_ATTR_TX_LTF_REPETITION_COUNT]);
+	}
+
+	if (tb[NL80211_PMSR_FTM_RESP_ATTR_RX_LTF_REPETITION_COUNT]) {
+		result->rx_ltf_repetition_count_valid = 1;
+		result->rx_ltf_repetition_count =
+			nla_get_u32(tb[NL80211_PMSR_FTM_RESP_ATTR_RX_LTF_REPETITION_COUNT]);
+	}
+
+	if (tb[NL80211_PMSR_FTM_RESP_ATTR_MAX_TIME_BETWEEN_MEASUREMENTS]) {
+		result->max_time_between_measurements_valid = 1;
+		result->max_time_between_measurements =
+			nla_get_u32(tb[NL80211_PMSR_FTM_RESP_ATTR_MAX_TIME_BETWEEN_MEASUREMENTS]);
+	}
+
+	if (tb[NL80211_PMSR_FTM_RESP_ATTR_MIN_TIME_BETWEEN_MEASUREMENTS]) {
+		result->min_time_between_measurements_valid = 1;
+		result->min_time_between_measurements =
+			nla_get_u32(tb[NL80211_PMSR_FTM_RESP_ATTR_MIN_TIME_BETWEEN_MEASUREMENTS]);
+	}
+
+	if (tb[NL80211_PMSR_FTM_RESP_ATTR_NUM_TX_SPATIAL_STREAMS]) {
+		result->num_tx_spatial_streams_valid = 1;
+		result->num_tx_spatial_streams =
+			nla_get_u8(tb[NL80211_PMSR_FTM_RESP_ATTR_NUM_TX_SPATIAL_STREAMS]);
+	}
+
+	if (tb[NL80211_PMSR_FTM_RESP_ATTR_NUM_RX_SPATIAL_STREAMS]) {
+		result->num_rx_spatial_streams_valid = 1;
+		result->num_rx_spatial_streams =
+			nla_get_u8(tb[NL80211_PMSR_FTM_RESP_ATTR_NUM_RX_SPATIAL_STREAMS]);
+	}
+
+	if (tb[NL80211_PMSR_FTM_RESP_ATTR_NOMINAL_TIME]) {
+		result->nominal_time_valid = 1;
+		result->nominal_time =
+			nla_get_u32(tb[NL80211_PMSR_FTM_RESP_ATTR_NOMINAL_TIME]);
+	}
+
+	if (tb[NL80211_PMSR_FTM_RESP_ATTR_AVAILABILITY_WINDOW]) {
+		result->availability_window_valid = 1;
+		result->availability_window =
+			nla_get_u32(tb[NL80211_PMSR_FTM_RESP_ATTR_AVAILABILITY_WINDOW]);
+	}
+
+	if (tb[NL80211_PMSR_FTM_RESP_ATTR_CHANNEL_WIDTH]) {
+		result->chan_width_valid = 1;
+		result->chan_width =
+			nla_get_u32(tb[NL80211_PMSR_FTM_RESP_ATTR_CHANNEL_WIDTH]);
+	}
+
+	if (tb[NL80211_PMSR_FTM_RESP_ATTR_PREAMBLE]) {
+		result->preamble_valid = 1;
+		result->preamble =
+			nla_get_u32(tb[NL80211_PMSR_FTM_RESP_ATTR_PREAMBLE]);
+	}
+
+	result->is_delayed_lmr =
+		nla_get_flag(tb[NL80211_PMSR_FTM_RESP_ATTR_IS_DELAYED_LMR]);
+
 	return 0;
 }
 
@@ -4103,37 +4273,37 @@ static int mac80211_hwsim_set_radar_background(struct ieee80211_hw *hw,
 #define HWSIM_DEBUGFS_OPS
 #endif
 
-#define HWSIM_COMMON_OPS						 \
-	.tx = mac80211_hwsim_tx,					 \
-	.wake_tx_queue = ieee80211_hwsim_wake_tx_queue,			 \
-	.start = mac80211_hwsim_start,					 \
-	.stop = mac80211_hwsim_stop,					 \
-	.add_interface = mac80211_hwsim_add_interface,			 \
-	.change_interface = mac80211_hwsim_change_interface,		 \
-	.remove_interface = mac80211_hwsim_remove_interface,		 \
-	.config = mac80211_hwsim_config,				 \
-	.configure_filter = mac80211_hwsim_configure_filter,		 \
-	.vif_cfg_changed = mac80211_hwsim_vif_info_changed,		 \
-	.link_info_changed = mac80211_hwsim_link_info_changed,		 \
-	.tx_last_beacon = mac80211_hwsim_tx_last_beacon,		 \
-	.sta_notify = mac80211_hwsim_sta_notify,			 \
-	.link_sta_rc_update = mac80211_hwsim_sta_rc_update,		 \
-	.conf_tx = mac80211_hwsim_conf_tx,				 \
-	.get_survey = mac80211_hwsim_get_survey,			 \
-	CFG80211_TESTMODE_CMD(mac80211_hwsim_testmode_cmd)		 \
-	.ampdu_action = mac80211_hwsim_ampdu_action,			 \
-	.flush = mac80211_hwsim_flush,					 \
-	.get_et_sset_count = mac80211_hwsim_get_et_sset_count,		 \
-	.get_et_stats = mac80211_hwsim_get_et_stats,			 \
-	.get_et_strings = mac80211_hwsim_get_et_strings,		 \
-	.start_pmsr = mac80211_hwsim_start_pmsr,			 \
-	.abort_pmsr = mac80211_hwsim_abort_pmsr,			 \
-	.set_rts_threshold = mac80211_hwsim_set_rts_threshold,		 \
-	.start_nan = mac80211_hwsim_nan_start,				 \
-	.stop_nan = mac80211_hwsim_nan_stop,				 \
-	.nan_change_conf = mac80211_hwsim_nan_change_config,		 \
-	.set_radar_background = mac80211_hwsim_set_radar_background,	 \
-	.set_key = mac80211_hwsim_set_key,				 \
+#define HWSIM_COMMON_OPS					\
+	.tx = mac80211_hwsim_tx,				\
+	.wake_tx_queue = ieee80211_hwsim_wake_tx_queue,		\
+	.start = mac80211_hwsim_start,				\
+	.stop = mac80211_hwsim_stop,				\
+	.add_interface = mac80211_hwsim_add_interface,		\
+	.change_interface = mac80211_hwsim_change_interface,	\
+	.remove_interface = mac80211_hwsim_remove_interface,	\
+	.config = mac80211_hwsim_config,			\
+	.configure_filter = mac80211_hwsim_configure_filter,	\
+	.vif_cfg_changed = mac80211_hwsim_vif_info_changed,	\
+	.link_info_changed = mac80211_hwsim_link_info_changed,  \
+	.tx_last_beacon = mac80211_hwsim_tx_last_beacon,	\
+	.sta_notify = mac80211_hwsim_sta_notify,		\
+	.link_sta_rc_update = mac80211_hwsim_sta_rc_update,	\
+	.conf_tx = mac80211_hwsim_conf_tx,			\
+	.get_survey = mac80211_hwsim_get_survey,		\
+	CFG80211_TESTMODE_CMD(mac80211_hwsim_testmode_cmd)	\
+	.ampdu_action = mac80211_hwsim_ampdu_action,		\
+	.flush = mac80211_hwsim_flush,				\
+	.get_et_sset_count = mac80211_hwsim_get_et_sset_count,	\
+	.get_et_stats = mac80211_hwsim_get_et_stats,		\
+	.get_et_strings = mac80211_hwsim_get_et_strings,	\
+	.start_pmsr = mac80211_hwsim_start_pmsr,		\
+	.abort_pmsr = mac80211_hwsim_abort_pmsr,		\
+	.set_radar_background = mac80211_hwsim_set_radar_background, \
+	.set_key = mac80211_hwsim_set_key,			\
+	.set_rts_threshold = mac80211_hwsim_set_rts_threshold,	\
+	.start_nan = mac80211_hwsim_nan_start,			\
+	.stop_nan = mac80211_hwsim_nan_stop,			\
+	.nan_change_conf = mac80211_hwsim_nan_change_config,	\
 	.nan_peer_sched_changed = mac80211_hwsim_nan_peer_sched_changed, \
 	HWSIM_DEBUGFS_OPS
 
@@ -4550,6 +4720,7 @@ static const struct ieee80211_sband_iftype_data sband_capa_2ghz[] = {
 			.has_uhr = true,
 			.mac.mac_cap = {
 				[0] = IEEE80211_UHR_MAC_CAP0_NPCA_SUPP,
+				[1] = IEEE80211_UHR_MAC_CAP1_DBE_SUPP,
 			},
 			.phy.cap = cpu_to_le32(IEEE80211_UHR_PHY_CAP_ELR_RX |
 					       IEEE80211_UHR_PHY_CAP_ELR_TX),
@@ -5314,7 +5485,6 @@ static const struct ieee80211_sband_iftype_data sband_capa_6ghz[] = {
 			.has_uhr = true,
 			.mac.mac_cap = {
 				[0] = IEEE80211_UHR_MAC_CAP0_NPCA_SUPP,
-				[1] = IEEE80211_UHR_MAC_CAP1_DBE_SUPP,
 			},
 			.phy.cap = cpu_to_le32(IEEE80211_UHR_PHY_CAP_ELR_RX |
 					       IEEE80211_UHR_PHY_CAP_ELR_TX),
@@ -5749,7 +5919,6 @@ static int mac80211_hwsim_new_radio(struct genl_info *info,
 	hw->wiphy->flags |= WIPHY_FLAG_SUPPORTS_TDLS |
 			    WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL |
 			    WIPHY_FLAG_AP_UAPSD |
-			    WIPHY_FLAG_SUPPORTS_5_10_MHZ |
 			    WIPHY_FLAG_HAS_CHANNEL_SWITCH;
 	hw->wiphy->flags |= WIPHY_FLAG_IBSS_RSN;
 	hw->wiphy->features |= NL80211_FEATURE_ACTIVE_MONITOR |
@@ -5855,7 +6024,9 @@ static int mac80211_hwsim_new_radio(struct genl_info *info,
 					    IEEE80211_HT_CAP_GRN_FLD |
 					    IEEE80211_HT_CAP_SGI_20 |
 					    IEEE80211_HT_CAP_SGI_40 |
-					    IEEE80211_HT_CAP_DSSSCCK40;
+					    IEEE80211_HT_CAP_DSSSCCK40 |
+					    IEEE80211_HT_CAP_TX_STBC |
+					    IEEE80211_HT_CAP_RX_STBC;
 			sband->ht_cap.ampdu_factor = 0x3;
 			sband->ht_cap.ampdu_density = 0x6;
 			memset(&sband->ht_cap.mcs, 0,
@@ -6464,6 +6635,82 @@ static int parse_ftm_capa(const struct nlattr *ftm_capa, struct cfg80211_pmsr_ca
 	out->ftm.trigger_based = !!tb[NL80211_PMSR_FTM_CAPA_ATTR_TRIGGER_BASED];
 	out->ftm.non_trigger_based = !!tb[NL80211_PMSR_FTM_CAPA_ATTR_NON_TRIGGER_BASED];
 
+	if (tb[NL80211_PMSR_FTM_CAPA_ATTR_MAX_NUM_TX_ANTENNAS])
+		out->ftm.max_no_of_tx_antennas =
+			nla_get_u8(tb[NL80211_PMSR_FTM_CAPA_ATTR_MAX_NUM_TX_ANTENNAS]);
+
+	if (tb[NL80211_PMSR_FTM_CAPA_ATTR_MAX_NUM_RX_ANTENNAS])
+		out->ftm.max_no_of_rx_antennas =
+			nla_get_u8(tb[NL80211_PMSR_FTM_CAPA_ATTR_MAX_NUM_RX_ANTENNAS]);
+
+	if (tb[NL80211_PMSR_FTM_CAPA_ATTR_MIN_INTERVAL_EDCA])
+		out->ftm.min_allowed_ranging_interval_edca =
+			nla_get_u32(tb[NL80211_PMSR_FTM_CAPA_ATTR_MIN_INTERVAL_EDCA]);
+
+	if (tb[NL80211_PMSR_FTM_CAPA_ATTR_MIN_INTERVAL_NTB])
+		out->ftm.min_allowed_ranging_interval_ntb =
+			nla_get_u32(tb[NL80211_PMSR_FTM_CAPA_ATTR_MIN_INTERVAL_NTB]);
+
+	if (tb[NL80211_PMSR_FTM_CAPA_ATTR_PD_PREAMBLES])
+		out->ftm.pd_preambles =
+			nla_get_u32(tb[NL80211_PMSR_FTM_CAPA_ATTR_PD_PREAMBLES]);
+
+	if (tb[NL80211_PMSR_FTM_CAPA_ATTR_PD_BANDWIDTHS])
+		out->ftm.pd_bandwidths =
+			nla_get_u32(tb[NL80211_PMSR_FTM_CAPA_ATTR_PD_BANDWIDTHS]);
+
+	if (tb[NL80211_PMSR_FTM_CAPA_ATTR_ISTA_CAPS]) {
+		struct nlattr *ista_tb[NL80211_PMSR_FTM_CAPA_ATTR_MAX + 1];
+
+		if (!nla_parse_nested(ista_tb, NL80211_PMSR_FTM_CAPA_ATTR_MAX,
+				      tb[NL80211_PMSR_FTM_CAPA_ATTR_ISTA_CAPS],
+				      hwsim_ftm_role_capa_policy, NULL)) {
+			out->ftm.ista.support_ntb =
+				!!ista_tb[NL80211_PMSR_FTM_CAPA_ATTR_SUPPORT_NTB];
+			out->ftm.ista.support_tb =
+				!!ista_tb[NL80211_PMSR_FTM_CAPA_ATTR_SUPPORT_TB];
+			out->ftm.ista.support_edca =
+				!!ista_tb[NL80211_PMSR_FTM_CAPA_ATTR_SUPPORT_EDCA];
+			if (ista_tb[NL80211_PMSR_ATTR_MAX_PEER_ISTA_ROLE])
+				out->ftm.ista.max_peers =
+					nla_get_u32(ista_tb[NL80211_PMSR_ATTR_MAX_PEER_ISTA_ROLE]);
+		}
+	}
+
+	if (tb[NL80211_PMSR_FTM_CAPA_ATTR_RSTA_CAPS]) {
+		struct nlattr *rsta_tb[NL80211_PMSR_FTM_CAPA_ATTR_MAX + 1];
+
+		if (!nla_parse_nested(rsta_tb, NL80211_PMSR_FTM_CAPA_ATTR_MAX,
+				      tb[NL80211_PMSR_FTM_CAPA_ATTR_RSTA_CAPS],
+				      hwsim_ftm_role_capa_policy, NULL)) {
+			out->ftm.rsta.support_ntb =
+				!!rsta_tb[NL80211_PMSR_FTM_CAPA_ATTR_SUPPORT_NTB];
+			out->ftm.rsta.support_tb =
+				!!rsta_tb[NL80211_PMSR_FTM_CAPA_ATTR_SUPPORT_TB];
+			out->ftm.rsta.support_edca =
+				!!rsta_tb[NL80211_PMSR_FTM_CAPA_ATTR_SUPPORT_EDCA];
+			if (rsta_tb[NL80211_PMSR_ATTR_MAX_PEER_RSTA_ROLE])
+				out->ftm.rsta.max_peers =
+					nla_get_u32(rsta_tb[NL80211_PMSR_ATTR_MAX_PEER_RSTA_ROLE]);
+		}
+	}
+
+	if (tb[NL80211_PMSR_FTM_CAPA_ATTR_TYPE_CAPS]) {
+		struct nlattr *type_tb[NL80211_PMSR_FTM_TYPE_CAPA_ATTR_MAX + 1];
+
+		if (!nla_parse_nested(type_tb, NL80211_PMSR_FTM_TYPE_CAPA_ATTR_MAX,
+				      tb[NL80211_PMSR_FTM_CAPA_ATTR_TYPE_CAPS],
+				      hwsim_ftm_type_capa_policy, NULL)) {
+			out->ftm.type.infra_support =
+				!!type_tb[NL80211_PMSR_FTM_TYPE_CAPA_ATTR_INFRA_SUPPORT];
+			out->ftm.type.pd_support =
+				!!type_tb[NL80211_PMSR_FTM_TYPE_CAPA_ATTR_PD_SUPPORT];
+		}
+	}
+
+	out->ftm.concurrent_ista_rsta_support =
+		!!tb[NL80211_PMSR_FTM_CAPA_ATTR_CONCURRENT_ISTA_RSTA_SUPPORT];
+
 	return 0;
 }
 
@@ -6589,9 +6836,15 @@ static int hwsim_new_radio_nl(struct sk_buff *msg, struct genl_info *info)
 		param.p2p_device = true;
 	}
 
-	if (param.nan_device)
+	if (param.nan_device) {
+		if (param.multi_radio) {
+			NL_SET_ERR_MSG(info->extack,
+				       "NAN is not supported on multi-radio wiphys");
+			return -EINVAL;
+		}
 		param.iftypes |= BIT(NL80211_IFTYPE_NAN) |
 				 BIT(NL80211_IFTYPE_NAN_DATA);
+	}
 
 	if (info->attrs[HWSIM_ATTR_CIPHER_SUPPORT]) {
 		u32 len = nla_len(info->attrs[HWSIM_ATTR_CIPHER_SUPPORT]);
@@ -6800,11 +7053,7 @@ done:
 }
 
 /* Generic Netlink operations array */
-#if LINUX_VERSION_IS_GEQ(5,10,0)
 static const struct genl_small_ops hwsim_ops[] = {
-#else
-static const struct genl_ops hwsim_ops[] = {
-#endif
 	{
 		.cmd = HWSIM_CMD_REGISTER,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
@@ -6853,18 +7102,11 @@ static struct genl_family hwsim_genl_family __ro_after_init = {
 	.policy = hwsim_genl_policy,
 	.netnsok = true,
 	.module = THIS_MODULE,
-#if LINUX_VERSION_IS_GEQ(5,10,0)
 	.small_ops = hwsim_ops,
 	.n_small_ops = ARRAY_SIZE(hwsim_ops),
-#else
-	.ops = hwsim_ops,
-	.n_ops = ARRAY_SIZE(hwsim_ops),
-#endif
-#if LINUX_VERSION_IS_GEQ(6,1,0)
 #if LINUX_VERSION_IS_GEQ(6,1,0)
 	.resv_start_op = HWSIM_CMD_REPORT_PMSR + 1,
 	// match with __HWSIM_CMD_MAX
-#endif
 #endif
 	.mcgrps = hwsim_mcgrps,
 	.n_mcgrps = ARRAY_SIZE(hwsim_mcgrps),
@@ -7251,8 +7493,6 @@ static int __init init_mac80211_hwsim(void)
 	err = class_register(&hwsim_class);
 	if (err)
 		goto out_exit_virtio;
-
-	hwsim_init_s1g_channels(hwsim_channels_s1g);
 
 	for (i = 0; i < radios; i++) {
 		struct hwsim_new_radio_params param = { 0 };

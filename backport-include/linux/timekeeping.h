@@ -5,6 +5,15 @@
 
 #include_next <linux/timekeeping.h>
 
+#if LINUX_VERSION_IS_LESS(7,2,0)
+/*
+ * struct system_device_crosststamp::sys_realtime was renamed to sys_systime
+ * in 7.2 (upstream 5ccaf1e569f0). Map the new name to the old one.
+ */
+#define sys_systime sys_realtime
+
+#endif /* < 7.2 */
+
 #if LINUX_VERSION_IS_LESS(5,3,0)
 #define ktime_get_boottime_ns ktime_get_boot_ns
 #define ktime_get_coarse_boottime_ns ktime_get_boot_ns
