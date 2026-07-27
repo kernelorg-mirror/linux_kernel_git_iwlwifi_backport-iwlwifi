@@ -2846,13 +2846,13 @@ mac80211_hwsim_sta_rc_update(struct ieee80211_hw *hw,
 		return;
 
 	rcu_read_lock();
-	for (link_id = 0;
-	     link_id < ARRAY_SIZE(vif->link_conf);
-	     link_id++) {
+	for (link_id = 0; link_id < ARRAY_SIZE(vif->link_conf); link_id++) {
 		enum nl80211_chan_width confbw = NL80211_CHAN_WIDTH_20_NOHT;
 
-		link_sta = rcu_dereference(sta->link[link_id]);
+		if (!(sta->active_links & BIT(link_id)))
+			continue;
 
+		link_sta = rcu_dereference(sta->link[link_id]);
 		if (!link_sta)
 			continue;
 
