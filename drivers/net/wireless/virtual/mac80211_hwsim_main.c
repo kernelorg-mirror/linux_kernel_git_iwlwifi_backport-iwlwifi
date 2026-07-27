@@ -2850,7 +2850,6 @@ mac80211_hwsim_sta_rc_update(struct ieee80211_hw *hw,
 	     link_id < ARRAY_SIZE(vif->link_conf);
 	     link_id++) {
 		enum nl80211_chan_width confbw = NL80211_CHAN_WIDTH_20_NOHT;
-		struct ieee80211_bss_conf *vif_conf;
 
 		link_sta = rcu_dereference(sta->link[link_id]);
 
@@ -2872,11 +2871,7 @@ mac80211_hwsim_sta_rc_update(struct ieee80211_hw *hw,
 		} else {
 			struct ieee80211_chanctx_conf *chanctx_conf;
 
-			vif_conf = rcu_dereference(vif->link_conf[link_id]);
-			if (WARN_ON(!vif_conf))
-				continue;
-
-			chanctx_conf = rcu_dereference(vif_conf->chanctx_conf);
+			chanctx_conf = rcu_dereference(link_sta->link_conf->chanctx_conf);
 
 			if (!WARN_ON(!chanctx_conf))
 				confbw = chanctx_conf->def.width;
