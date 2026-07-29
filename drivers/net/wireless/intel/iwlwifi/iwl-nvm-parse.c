@@ -1334,6 +1334,25 @@ static void iwl_init_eht_band_override(struct iwl_trans *trans,
 	}
 }
 
+static void iwl_init_uhr_band_override(struct iwl_trans *trans,
+				       struct ieee80211_supported_band *sband)
+{
+	struct ieee80211_sband_iftype_data *iftype_data;
+	int i;
+
+	for (i = 0; i < sband->n_iftype_data; i++) {
+		/* we know it's writable - we set it before ourselves */
+		iftype_data = (void *)(uintptr_t)&sband->iftype_data[i];
+
+		/* Skip setting uhr on not supported iftype */
+		if (!iftype_data->uhr_cap.has_uhr)
+			continue;
+
+		IWL_COPY_BIN(uhr_mac_cap, uhr_cap.mac);
+		IWL_COPY_BIN(uhr_phy_cap, uhr_cap.phy);
+	}
+}
+
 static void iwl_init_he_eht_override(struct iwl_trans *trans,
 				  struct ieee80211_supported_band *sbands)
 {
@@ -1342,6 +1361,7 @@ static void iwl_init_he_eht_override(struct iwl_trans *trans,
 	for (band_id = 0; band_id < NUM_NL80211_BANDS; band_id++) {
 		iwl_init_he_override(trans, &sbands[band_id]);
 		iwl_init_eht_band_override(trans, &sbands[band_id]);
+		iwl_init_uhr_band_override(trans, &sbands[band_id]);
 	}
 }
 #endif
