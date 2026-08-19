@@ -85,7 +85,7 @@ static int iwl_send_led_cmd(struct iwl_priv *priv, struct iwl_led_cmd *led_cmd)
 	};
 	u32 reg;
 
-	reg = iwl_read32(priv->trans, CSR_LED_REG);
+	reg = iwl_trans_read32(priv->trans, CSR_LED_REG);
 	if (reg != (reg & CSR_LED_BSM_CTRL_MSK))
 		iwl_trans_write32(priv->trans, CSR_LED_REG,
 				  reg & CSR_LED_BSM_CTRL_MSK);

@@ -154,7 +154,7 @@ static void iwl_tt_check_exit_ct_kill(struct timer_list *t)
 					  CSR_UCODE_DRV_GP1_REG_BIT_CT_KILL_EXIT);
 			priv->thermal_throttle.ct_kill_toggle = true;
 		}
-		iwl_read32(priv->trans, CSR_UCODE_DRV_GP1);
+		iwl_trans_read32(priv->trans, CSR_UCODE_DRV_GP1);
 		if (iwl_trans_grab_nic_access(priv->trans))
 			iwl_trans_release_nic_access(priv->trans);
 
