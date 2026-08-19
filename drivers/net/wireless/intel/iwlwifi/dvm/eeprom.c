@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /*
- * Copyright (C) 2005-2014, 2018-2019, 2021, 2024-2025 Intel Corporation
+ * Copyright (C) 2005-2014, 2018-2019, 2021, 2024-2026 Intel Corporation
  */
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -794,8 +794,8 @@ static int iwl_read_otp_word(struct iwl_trans *trans, u16 addr,
 	u32 r;
 	u32 otpgp;
 
-	iwl_write32(trans, CSR_EEPROM_REG,
-		    CSR_EEPROM_REG_MSK_ADDR & (addr << 1));
+	iwl_trans_write32(trans, CSR_EEPROM_REG,
+			  CSR_EEPROM_REG_MSK_ADDR & (addr << 1));
 	ret = iwl_poll_bits(trans, CSR_EEPROM_REG,
 			    CSR_EEPROM_REG_READ_VALID_MSK,
 			    IWL_EEPROM_ACCESS_TIMEOUT);
@@ -960,9 +960,9 @@ int iwl_read_eeprom(struct iwl_trans *trans, u8 **eeprom, size_t *eeprom_size)
 			goto err_unlock;
 		}
 
-		iwl_write32(trans, CSR_EEPROM_GP,
-			    iwl_read32(trans, CSR_EEPROM_GP) &
-			    ~CSR_EEPROM_GP_IF_OWNER_MSK);
+		iwl_trans_write32(trans, CSR_EEPROM_GP,
+				  iwl_read32(trans, CSR_EEPROM_GP) &
+				  ~CSR_EEPROM_GP_IF_OWNER_MSK);
 
 		iwl_set_bit(trans, CSR_OTP_GP_REG,
 			    CSR_OTP_GP_REG_ECC_CORR_STATUS_MSK |
@@ -988,8 +988,8 @@ int iwl_read_eeprom(struct iwl_trans *trans, u8 **eeprom, size_t *eeprom_size)
 		for (addr = 0; addr < sz; addr += sizeof(u16)) {
 			u32 r;
 
-			iwl_write32(trans, CSR_EEPROM_REG,
-				    CSR_EEPROM_REG_MSK_ADDR & (addr << 1));
+			iwl_trans_write32(trans, CSR_EEPROM_REG,
+					  CSR_EEPROM_REG_MSK_ADDR & (addr << 1));
 
 			ret = iwl_poll_bits(trans, CSR_EEPROM_REG,
 					    CSR_EEPROM_REG_READ_VALID_MSK,
