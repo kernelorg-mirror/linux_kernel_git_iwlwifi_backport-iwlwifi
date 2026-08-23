@@ -670,6 +670,7 @@ iwl_mld_free_skb(struct iwl_op_mode *op_mode, struct sk_buff *skb)
 	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
 
 	iwl_trans_free_tx_cmd(mld->trans, info->driver_data[1]);
+
 	ieee80211_free_txskb(mld->hw, skb);
 }
 
