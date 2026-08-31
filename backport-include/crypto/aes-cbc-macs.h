@@ -142,4 +142,27 @@ static inline void aes_cmac(const struct aes_cmac_key *key, const u8 *data,
 
 #endif /* < 7.1 */
 
+/* The zeroization helpers were only added in 7.3. */
+#if LINUX_VERSION_IS_LESS(7,3,0)
+#include <linux/string.h>
+
+/**
+ * aes_cmac_zeroize_key() - Zeroize an aes_cmac_key structure
+ * @key: The location of the key structure that should be zeroized
+ */
+static inline void aes_cmac_zeroize_key(struct aes_cmac_key *key)
+{
+	memzero_explicit(key, sizeof(*key));
+}
+
+/**
+ * aes_cmac_zeroize_ctx() - Zeroize an aes_cmac_ctx structure
+ * @ctx: The location of the context that should be zeroized
+ */
+static inline void aes_cmac_zeroize_ctx(struct aes_cmac_ctx *ctx)
+{
+	memzero_explicit(ctx, sizeof(*ctx));
+}
+#endif /* < 7.3 */
+
 #endif /* _BACKPORT_CRYPTO_AES_CBC_MACS_H */
