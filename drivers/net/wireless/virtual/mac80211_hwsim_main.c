@@ -2356,7 +2356,12 @@ static void mac80211_hwsim_stop(struct ieee80211_hw *hw, bool suspend)
 	struct sk_buff *skb;
 	int i;
 
-	data->started = false;
+	/*
+	 * Serialise against wmediumd userspace, so no more frames
+	 * can be handed to mac80211 after this returns.
+	 */
+	scoped_guard(mutex, &data->mutex)
+		data->started = false;
 
 	for (i = 0; i < ARRAY_SIZE(data->link_data); i++)
 		hrtimer_cancel(&data->link_data[i].beacon_timer);
@@ -6582,12 +6587,12 @@ static int hwsim_cloned_frame_received_nl(struct sk_buff *skb_2,
 
 	if (frame_data_len < sizeof(struct ieee80211_hdr_3addr) ||
 	    frame_data_len > IEEE80211_MAX_DATA_LEN)
-		goto err;
+		goto out;
 
 	/* Allocate new skb here */
 	skb = alloc_skb(frame_data_len, GFP_KERNEL);
 	if (skb == NULL)
-		goto err;
+		goto out;
 
 	/* Copy the data */
 	skb_put_data(skb, frame_data, frame_data_len);
@@ -6612,6 +6617,13 @@ static int hwsim_cloned_frame_received_nl(struct sk_buff *skb_2,
 			goto out;
 	}
 
+	/*
+	 * Serialise against mac80211_hwsim_stop() - mac80211 doesn't allow
+	 * frames reported while the HW is down, hence the ->started check
+	 * must be under mutex.
+	 */
+	mutex_lock(&data2->mutex);
+
 	/* look for the skb matching the cookie passed back from user */
 	if (info->attrs[HWSIM_ATTR_COOKIE] &&
 	    info->attrs[HWSIM_ATTR_ADDR_TRANSMITTER]) {
@@ -6625,7 +6637,7 @@ static int hwsim_cloned_frame_received_nl(struct sk_buff *skb_2,
 		transmitter = nla_data(info->attrs[HWSIM_ATTR_ADDR_TRANSMITTER]);
 		txdata = get_hwsim_data_ref_from_addr(transmitter);
 		if (!txdata || txdata->netgroup != data2->netgroup)
-			goto out;
+			goto out_unlock;
 
 		spin_lock_irqsave(&txdata->pending.lock, flags);
 		skb_queue_walk(&txdata->pending, orig_skb) {
@@ -6643,14 +6655,14 @@ static int hwsim_cloned_frame_received_nl(struct sk_buff *skb_2,
 		/* that's weird */
 		if (!found) {
 			spin_unlock_irqrestore(&txdata->pending.lock, flags);
-			goto out;
+			goto out_unlock;
 		}
 
 		if (frame_data_len > found->len &&
 		    pskb_expand_head(found, 0, frame_data_len - found->len,
 				     GFP_ATOMIC)) {
 			spin_unlock_irqrestore(&txdata->pending.lock, flags);
-			goto out;
+			goto out_unlock;
 		}
 		skb_trim(found, 0);
 		skb_put_data(found, frame_data, frame_data_len);
@@ -6660,7 +6672,7 @@ static int hwsim_cloned_frame_received_nl(struct sk_buff *skb_2,
 	/* check if radio is configured properly */
 
 	if ((data2->idle && !data2->tmp_chan) || !data2->started)
-		goto out;
+		goto out_unlock;
 
 	/* A frame is received from user space */
 	memset(&rx_status, 0, sizeof(rx_status));
@@ -6680,22 +6692,18 @@ static int hwsim_cloned_frame_received_nl(struct sk_buff *skb_2,
 		iter_data.channel = ieee80211_get_channel(data2->hw->wiphy,
 							  rx_status.freq);
 		if (!iter_data.channel)
-			goto out;
+			goto out_unlock;
 		rx_status.band = iter_data.channel->band;
 
-		mutex_lock(&data2->mutex);
 		if (!hwsim_chans_compat(iter_data.channel, channel)) {
 			ieee80211_iterate_active_interfaces_atomic(
 				data2->hw, IEEE80211_IFACE_ITER_NORMAL,
 				mac80211_hwsim_tx_iter, &iter_data);
-			if (!iter_data.receive) {
-				mutex_unlock(&data2->mutex);
-				goto out;
-			}
+			if (!iter_data.receive)
+				goto out_unlock;
 		}
-		mutex_unlock(&data2->mutex);
 	} else if (!channel) {
-		goto out;
+		goto out_unlock;
 	} else {
 		rx_status.freq = channel->center_freq;
 		rx_status.band = channel->band;
@@ -6703,7 +6711,7 @@ static int hwsim_cloned_frame_received_nl(struct sk_buff *skb_2,
 
 	rx_status.rate_idx = nla_get_u32(info->attrs[HWSIM_ATTR_RX_RATE]);
 	if (rx_status.rate_idx >= data2->hw->wiphy->bands[rx_status.band]->n_bitrates)
-		goto out;
+		goto out_unlock;
 	rx_status.signal = nla_get_u32(info->attrs[HWSIM_ATTR_SIGNAL]);
 
 	hdr = (void *)skb->data;
@@ -6713,10 +6721,11 @@ static int hwsim_cloned_frame_received_nl(struct sk_buff *skb_2,
 		rx_status.boottime_ns = ktime_get_boottime_ns();
 
 	mac80211_hwsim_rx(data2, &rx_status, skb);
+	mutex_unlock(&data2->mutex);
 
 	return 0;
-err:
-	pr_debug("mac80211_hwsim: error occurred in %s\n", __func__);
+out_unlock:
+	mutex_unlock(&data2->mutex);
 out:
 	dev_kfree_skb(skb);
 	return -EINVAL;
