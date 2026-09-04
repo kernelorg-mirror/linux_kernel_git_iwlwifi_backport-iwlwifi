@@ -173,8 +173,6 @@ int cfg80211_switch_netns(struct cfg80211_registered_device *rdev,
 		wdev->netdev->features &= ~NETIF_F_NETNS_LOCAL;
 #endif
 		err = dev_change_net_namespace(wdev->netdev, net, "wlan%d");
-		if (err)
-			break;
 #if LINUX_VERSION_IS_GEQ(6,15,0)
 		wdev->netdev->netns_immutable = true;
 #elif LINUX_VERSION_IS_GEQ(6,12,0)
@@ -182,6 +180,8 @@ int cfg80211_switch_netns(struct cfg80211_registered_device *rdev,
 #else
 		wdev->netdev->features |= NETIF_F_NETNS_LOCAL;
 #endif
+		if (err)
+			break;
 	}
 
 	if (err) {
