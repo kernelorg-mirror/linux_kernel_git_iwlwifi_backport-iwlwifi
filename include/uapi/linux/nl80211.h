@@ -3218,6 +3218,11 @@ enum nl80211_commands {
  *	The aggregated message always precedes the per-link messages for the
  *	same station within a dump sequence.
  *
+ * @NL80211_ATTR_FRAME_NO_STA: Valid for @NL80211_CMD_FRAME to denote that
+ *	the kernel had no station for a received frame or should not use a
+ *	known station to transmit a frame. This is relevant to know whether
+ *	MLD address translation happened or to disable it when sending a frame.
+ *
  * @NL80211_ATTR_ASSOC_CIP: Enable Control Integrity Protocol for the
  *	association
  * @NL80211_ATTR_CIP_CAPABILITIES: The Control Integrity Protocol for the
@@ -3822,6 +3827,8 @@ enum nl80211_attrs {
 	NL80211_ATTR_NPCA_PUNCT_BITMAP,
 
 	NL80211_ATTR_STA_DUMP_LINK_STATS,
+
+	NL80211_ATTR_FRAME_NO_STA,
 
 	NL80211_ATTR_ASSOC_CIP,
 	NL80211_ATTR_CIP_CAPABILITIES,
