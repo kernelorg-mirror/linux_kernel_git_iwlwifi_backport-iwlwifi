@@ -2373,7 +2373,7 @@ static int sta_link_apply_parameters(struct ieee80211_local *local,
 						 link_sta);
 
 	if (params->cip_cap_set)
-		link_sta->pub->cip_mic_padding = params->cip_cap;
+		link_sta->pub->cip_cap = params->cip_cap;
 
 	switch (sdata->vif.type) {
 	case NL80211_IFTYPE_NAN:
