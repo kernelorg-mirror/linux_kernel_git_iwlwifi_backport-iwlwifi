@@ -365,8 +365,7 @@ static bool iwl_mld_is_cip_supported(struct iwl_mld *mld)
 	return mld->trans->dbg_cfg.MLD_CIP_ENABLED;
 #else
 	/*
-	 * There is no D3 rekey support for the CIGTK,
-	 * this can be enabled once the firmware fully supports the feature.
+	 * D3 rekey support for the CIGTK wasn't tested yet.
 	 */
 	return false;
 #endif
