@@ -2,6 +2,8 @@
 #define __BACKPORT_TIMEKEEPING_H
 #include <linux/version.h>
 #include <linux/types.h>
+/* old kernels only include this from linux/ktime.h, and rely on its types */
+#include <linux/ktime.h>
 
 #include_next <linux/timekeeping.h>
 
