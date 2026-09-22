@@ -49,7 +49,10 @@ subdir-ccflags-y += $(call cc-option,-Wno-declaration-after-statement)
 
 subdir-ccflags-y += -D__CHECK_ENDIAN__ -Wunused-but-set-variable
 subdir-ccflags-$(CPTCFG_IWLWIFI_SIMULATION) += -Wshadow
+# clang doesn't know -Wlogical-op at all
+ifneq ($(CONFIG_CC_IS_CLANG),y)
 subdir-ccflags-$(CPTCFG_IWLWIFI_SIMULATION) += -Wlogical-op
+endif
 subdir-ccflags-$(CPTCFG_IWLWIFI_SIMULATION) += -Wmissing-field-initializers
 
 obj-y += compat/

@@ -56,6 +56,10 @@ iwlwifi-$(CPTCFG_IWLWIFI_DEVICE_TESTMODE) += iwl-tm-gnl.o fw/testmode.o
 ccflags-y += -I$(src)
 subdir-ccflags-y += $(call cc-option,-Wimplicit-fallthrough)
 # for FreeBSD compatibility - they use most of our driver
+# clang's __is_constexpr()-style kernel macros (GENMASK, hweight8, ...)
+# rely on a void*-ternary sizeof() GNU trick that trips this under clang
+ifneq ($(CONFIG_CC_IS_CLANG),y)
+endif
 
 obj-$(CPTCFG_IWLDVM)	+= dvm/
 obj-$(CPTCFG_IWLMVM)	+= mvm/
