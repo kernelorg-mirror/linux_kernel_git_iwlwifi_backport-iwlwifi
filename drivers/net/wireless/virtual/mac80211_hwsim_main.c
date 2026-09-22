@@ -7487,8 +7487,8 @@ static void hwsim_virtio_rx_done(struct virtqueue *vq)
 static int init_vqs(struct virtio_device *vdev)
 {
 	struct virtqueue_info vqs_info[HWSIM_NUM_VQS] = {
-		[HWSIM_VQ_TX] = { "tx", hwsim_virtio_tx_done },
-		[HWSIM_VQ_RX] = { "rx", hwsim_virtio_rx_done },
+		[HWSIM_VQ_TX] = { .name = "tx", .callback = hwsim_virtio_tx_done },
+		[HWSIM_VQ_RX] = { .name = "rx", .callback = hwsim_virtio_rx_done },
 	};
 
 	return virtio_find_vqs(vdev, HWSIM_NUM_VQS,
