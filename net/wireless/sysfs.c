@@ -160,8 +160,9 @@ static SIMPLE_DEV_PM_OPS(wiphy_pm_ops, wiphy_suspend, wiphy_resume);
 #define WIPHY_PM_OPS NULL
 #endif
 
-#if LINUX_VERSION_IS_GEQ(7,0,0) && !defined(CPTCFG_IWLWIFI_SIMULATION)
-/* vlab uses 7.0-rc3 which doesn't want this backport. 7.0 does need it */
+#ifndef CPTCFG_IWLWIFI_SIMULATION
+// temporarily remove namespace support on vlab for 7.0-rc -> later update
+#if LINUX_VERSION_IS_GEQ(7,0,0)
 static const struct ns_common *wiphy_namespace(const struct device *d)
 {
 	struct wiphy *wiphy = container_of(d, struct wiphy, dev);
@@ -175,14 +176,17 @@ static const void *wiphy_namespace(__ns_const struct device *d) {
 	return wiphy_net(wiphy);
 }
 #endif
+#endif
 
 struct class ieee80211_class = {
 	.name = "ieee80211",
 	.dev_release = wiphy_dev_release,
 	.dev_groups = ieee80211_groups,
 	.pm = WIPHY_PM_OPS,
+#ifndef CPTCFG_IWLWIFI_SIMULATION
 	.ns_type = &net_ns_type_operations,
 	.namespace = wiphy_namespace,
+#endif
 };
 
 int wiphy_sysfs_init(void)
