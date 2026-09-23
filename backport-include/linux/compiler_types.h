@@ -58,4 +58,19 @@
 #define __flex_counter(FAM)	((void *)NULL)
 #endif
 
+/*
+ * Optional: only supported since gcc >= 14
+ * Optional: only supported since clang >= 18
+ *
+ *   gcc: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108896
+ * clang: https://reviews.llvm.org/D148381
+ */
+#ifndef __counted_by
+#if __has_attribute(__counted_by__)
+# define __counted_by(member)		__attribute__((__counted_by__(member)))
+#else
+# define __counted_by(member)
+#endif
+#endif
+
 #endif /* _BACKPORTS_LINUX_COMPILER_TYPES_H */
