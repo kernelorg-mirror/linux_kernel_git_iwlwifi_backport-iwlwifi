@@ -65,7 +65,7 @@
  *   gcc: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=108896
  * clang: https://reviews.llvm.org/D148381
  */
-#ifndef __counted_by
+#ifndef CONFIG_CC_HAS_COUNTED_BY
 #if __has_attribute(__counted_by__)
 # define __counted_by(member)		__attribute__((__counted_by__(member)))
 #else
