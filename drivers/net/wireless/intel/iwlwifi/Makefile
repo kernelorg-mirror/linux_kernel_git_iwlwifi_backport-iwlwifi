@@ -67,6 +67,8 @@ obj-$(CPTCFG_IWLMEI)	+= mei/
 obj-$(CPTCFG_IWLXVT)	+= xvt/
 obj-$(CPTCFG_IWLMLD)	+= mld/
 
+CONTEXT_ANALYSIS := y
+
 obj-$(CPTCFG_IWLWIFI_KUNIT_TESTS) += tests/
 
 CFLAGS_iwl-devtrace.o := -I$(src)

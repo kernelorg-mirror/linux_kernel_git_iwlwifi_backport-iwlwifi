@@ -26,6 +26,31 @@
 #ifndef __no_context_analysis
 #define __no_context_analysis
 #endif
+#if LINUX_VERSION_IS_LESS(7,0,0)
+#undef __cond_acquires
+#define __cond_acquires(...)
+#endif
+#ifndef token_context_lock
+#define token_context_lock(...)
+#endif
+#ifndef __must_hold_shared
+#define __must_hold_shared(...)
+#endif
+#ifndef __acquires_shared
+#define __acquires_shared(...)
+#endif
+#ifndef context_lock_struct
+#define context_lock_struct(x) struct x
+#endif
+#ifndef __context_unsafe
+#define __context_unsafe(...)
+#endif
+#ifndef disable_context_analysis
+#define disable_context_analysis()
+#endif
+#ifndef enable_context_analysis
+#define enable_context_analysis()
+#endif
 
 /*
  * Optional: only supported since gcc >= 15, clang >= 19
