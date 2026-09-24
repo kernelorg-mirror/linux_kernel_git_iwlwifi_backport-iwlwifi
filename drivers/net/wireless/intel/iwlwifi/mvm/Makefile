@@ -24,3 +24,5 @@ iwlmvm-$(CPTCFG_IWL_VENDOR_CMDS) += vendor-cmd.o
 ifeq ($(CPTCFG_IWLWIFI_SIMULATION),y)
 UBSAN_SANITIZE := y
 endif
+
+CONTEXT_ANALYSIS := y
