@@ -13,3 +13,5 @@ iwlmld-$(CONFIG_PM_SLEEP) += d3.o
 iwlmld-$(CPTCFG_IWL_VENDOR_CMDS) += vendor-cmd.o
 
 subdir-ccflags-y += -I$(src)/../
+
+CONTEXT_ANALYSIS := y
