@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
 /*
- * Copyright (C) 2005-2014, 2021-2022, 2024-2025 Intel Corporation
+ * Copyright (C) 2005-2014, 2021-2022, 2024-2026 Intel Corporation
  */
 #ifndef __iwl_agn_h__
 #define __iwl_agn_h__
@@ -136,7 +136,8 @@ static inline const struct ieee80211_supported_band *iwl_get_hw_mode(
 #ifdef CONFIG_PM_SLEEP
 int iwlagn_send_patterns(struct iwl_priv *priv,
 			 struct cfg80211_wowlan *wowlan);
-int iwlagn_suspend(struct iwl_priv *priv, struct cfg80211_wowlan *wowlan);
+int iwlagn_suspend(struct iwl_priv *priv, struct cfg80211_wowlan *wowlan)
+	__must_hold(&priv->mutex);
 #endif
 
 /* rx */
