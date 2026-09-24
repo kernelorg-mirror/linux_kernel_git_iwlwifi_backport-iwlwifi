@@ -870,7 +870,18 @@ hwsim_pmsr_capa_policy[NL80211_PMSR_ATTR_MAX + 1] = {
 	[NL80211_PMSR_ATTR_PEERS] = { .type = NLA_REJECT }, // only for request.
 };
 
+static const struct nla_policy hwsim_reg_rule_policy[HWSIM_REG_RULE_ATTR_MAX + 1] = {
+	[HWSIM_REG_RULE_ATTR_START_KHZ] = { .type = NLA_U32 },
+	[HWSIM_REG_RULE_ATTR_END_KHZ] = { .type = NLA_U32 },
+	[HWSIM_REG_RULE_ATTR_MAX_BW_KHZ] = { .type = NLA_U32 },
+	[HWSIM_REG_RULE_ATTR_MAX_ANT_GAIN_MBI] = { .type = NLA_U32 },
+	[HWSIM_REG_RULE_ATTR_MAX_EIRP_MBM] = { .type = NLA_U32 },
+	[HWSIM_REG_RULE_ATTR_FLAGS] = { .type = NLA_U32 },
+	[HWSIM_REG_RULE_ATTR_DFS_CAC_MS] = { .type = NLA_U32 },
+};
+
 static const struct nla_policy hwsim_genl_policy[HWSIM_ATTR_MAX + 1] = {
+	[0] = { .strict_start_type = HWSIM_ATTR_REG_RULES },
 	[HWSIM_ATTR_ADDR_RECEIVER] = NLA_POLICY_ETH_ADDR_COMPAT,
 	[HWSIM_ATTR_ADDR_TRANSMITTER] = NLA_POLICY_ETH_ADDR_COMPAT,
 	[HWSIM_ATTR_FRAME] = { .type = NLA_BINARY,
@@ -904,6 +915,9 @@ static const struct nla_policy hwsim_genl_policy[HWSIM_ATTR_MAX + 1] = {
 	[HWSIM_ATTR_SUPPORT_NAN_DEVICE] = { .type = NLA_FLAG },
 	[HWSIM_ATTR_SUPPORT_BACKGROUND_RADAR] = { .type = NLA_FLAG },
 	[HWSIM_ATTR_NO_MONITOR] = { .type = NLA_FLAG },
+	[HWSIM_ATTR_REG_RULES] = NLA_POLICY_NESTED_ARRAY(hwsim_reg_rule_policy),
+	[HWSIM_ATTR_REG_DFS_REGION] =
+		NLA_POLICY_MAX(NLA_U32, NL80211_DFS_JP),
 };
 
 #if IS_REACHABLE(CONFIG_VIRTIO)
@@ -4394,6 +4408,7 @@ struct hwsim_new_radio_params {
 	unsigned int channels;
 	const char *reg_alpha2;
 	const struct ieee80211_regdomain *regd;
+	struct ieee80211_regdomain *configured_regd;
 	bool reg_strict;
 	bool p2p_device;
 	bool use_chanctx;
@@ -6159,7 +6174,13 @@ static int mac80211_hwsim_new_radio(struct genl_info *info,
 
 	if (param->reg_strict)
 		hw->wiphy->regulatory_flags |= REGULATORY_STRICT_REG;
-	if (param->regd) {
+	if (param->configured_regd) {
+		hw->wiphy->regulatory_flags |= REGULATORY_WIPHY_SELF_MANAGED;
+		err = regulatory_set_wiphy_regd(hw->wiphy,
+						param->configured_regd);
+		if (err)
+			goto failed_hw;
+	} else if (param->regd) {
 		data->regd = param->regd;
 		hw->wiphy->regulatory_flags |= REGULATORY_CUSTOM_REG;
 		wiphy_apply_custom_regulatory(hw->wiphy, param->regd);
@@ -6903,6 +6924,90 @@ static int parse_pmsr_capa(const struct nlattr *pmsr_capa, struct cfg80211_pmsr_
 	return 0;
 }
 
+static struct ieee80211_regdomain *
+hwsim_parse_reg_rules(struct nlattr *rules_attr, struct nlattr *dfs_region_attr,
+		      struct netlink_ext_ack *extack)
+{
+	struct ieee80211_regdomain *regd;
+	struct nlattr *nl_rule;
+	unsigned int n_rules = 0;
+	int rem, err;
+
+	nla_for_each_nested(nl_rule, rules_attr, rem)
+		n_rules++;
+
+	if (!n_rules || n_rules > NL80211_MAX_SUPP_REG_RULES) {
+		NL_SET_ERR_MSG_ATTR(extack, rules_attr,
+				    "invalid number of regulatory rules");
+		return ERR_PTR(-EINVAL);
+	}
+
+	regd = kzalloc(struct_size(regd, reg_rules, n_rules), GFP_KERNEL);
+	if (!regd)
+		return ERR_PTR(-ENOMEM);
+
+	regd->n_reg_rules = n_rules;
+	memcpy(regd->alpha2, "99", 2);
+	regd->dfs_region = nla_get_u32_default(dfs_region_attr,
+					       NL80211_DFS_UNSET);
+
+	n_rules = 0;
+	nla_for_each_nested(nl_rule, rules_attr, rem) {
+		struct ieee80211_reg_rule *rule = &regd->reg_rules[n_rules++];
+		struct ieee80211_freq_range *range = &rule->freq_range;
+		struct nlattr *tb[HWSIM_REG_RULE_ATTR_MAX + 1];
+
+		err = nla_parse_nested(tb, HWSIM_REG_RULE_ATTR_MAX, nl_rule,
+				       NULL, NULL);
+		if (err)
+			goto err_free;
+
+		if (!tb[HWSIM_REG_RULE_ATTR_START_KHZ] ||
+		    !tb[HWSIM_REG_RULE_ATTR_END_KHZ] ||
+		    !tb[HWSIM_REG_RULE_ATTR_MAX_BW_KHZ]) {
+			NL_SET_ERR_MSG_ATTR(extack, nl_rule,
+					    "incomplete regulatory rule");
+			err = -EINVAL;
+			goto err_free;
+		}
+
+		range->start_freq_khz =
+			nla_get_u32(tb[HWSIM_REG_RULE_ATTR_START_KHZ]);
+		range->end_freq_khz =
+			nla_get_u32(tb[HWSIM_REG_RULE_ATTR_END_KHZ]);
+		range->max_bandwidth_khz =
+			nla_get_u32(tb[HWSIM_REG_RULE_ATTR_MAX_BW_KHZ]);
+
+		if (!range->start_freq_khz ||
+		    range->end_freq_khz <= range->start_freq_khz ||
+		    range->max_bandwidth_khz >
+				range->end_freq_khz - range->start_freq_khz) {
+			NL_SET_ERR_MSG_ATTR(extack, nl_rule,
+					    "invalid regulatory rule");
+			err = -EINVAL;
+			goto err_free;
+		}
+
+		rule->power_rule.max_eirp =
+			nla_get_u32_default(tb[HWSIM_REG_RULE_ATTR_MAX_EIRP_MBM],
+					    2000);
+		rule->power_rule.max_antenna_gain =
+			nla_get_u32_default(tb[HWSIM_REG_RULE_ATTR_MAX_ANT_GAIN_MBI],
+					    0);
+		rule->flags = nla_get_u32_default(tb[HWSIM_REG_RULE_ATTR_FLAGS],
+						  0);
+		rule->dfs_cac_ms =
+			nla_get_u32_default(tb[HWSIM_REG_RULE_ATTR_DFS_CAC_MS],
+					    0);
+	}
+
+	return regd;
+
+err_free:
+	kfree(regd);
+	return ERR_PTR(err);
+}
+
 static int hwsim_new_radio_nl(struct sk_buff *msg, struct genl_info *info)
 {
 	struct hwsim_new_radio_params param = { 0 };
@@ -6937,6 +7042,21 @@ static int hwsim_new_radio_nl(struct sk_buff *msg, struct genl_info *info)
 
 	if (info->attrs[HWSIM_ATTR_SUPPORT_BACKGROUND_RADAR])
 		param.background_radar = true;
+
+	if (info->attrs[HWSIM_ATTR_REG_RULES]) {
+		if (info->attrs[HWSIM_ATTR_REG_CUSTOM_REG] ||
+		    info->attrs[HWSIM_ATTR_REG_HINT_ALPHA2] ||
+		    info->attrs[HWSIM_ATTR_REG_STRICT_REG]) {
+			GENL_SET_ERR_MSG(info,
+					 "cannot combine custom regd with other regulatory settings");
+			return -EINVAL;
+		}
+	} else if (info->attrs[HWSIM_ATTR_REG_DFS_REGION]) {
+		NL_SET_ERR_MSG_ATTR(info->extack,
+				    info->attrs[HWSIM_ATTR_REG_DFS_REGION],
+				    "DFS region requires custom regd");
+		return -EINVAL;
+	}
 
 	if (info->attrs[HWSIM_ATTR_REG_HINT_ALPHA2])
 		param.reg_alpha2 =
@@ -7055,9 +7175,24 @@ static int hwsim_new_radio_nl(struct sk_buff *msg, struct genl_info *info)
 			goto out_free;
 	}
 
+	if (info->attrs[HWSIM_ATTR_REG_RULES]) {
+		struct ieee80211_regdomain *regd;
+
+		regd = hwsim_parse_reg_rules(info->attrs[HWSIM_ATTR_REG_RULES],
+					     info->attrs[HWSIM_ATTR_REG_DFS_REGION],
+					     info->extack);
+		if (IS_ERR(regd)) {
+			ret = PTR_ERR(regd);
+			goto out_free;
+		}
+
+		param.configured_regd = regd;
+	}
+
 	ret = mac80211_hwsim_new_radio(info, &param);
 
 out_free:
+	kfree(param.configured_regd);
 	kfree(hwname);
 	kfree(param.pmsr_capa);
 	return ret;

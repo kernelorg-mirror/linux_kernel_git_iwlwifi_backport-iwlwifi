@@ -71,6 +71,7 @@ enum hwsim_tx_control_flags {
  *	%HWSIM_ATTR_DESTROY_RADIO_ON_CLOSE, %HWSIM_ATTR_CHANNELS,
  *	%HWSIM_ATTR_NO_VIF, %HWSIM_ATTR_RADIO_NAME, %HWSIM_ATTR_USE_CHANCTX,
  *	%HWSIM_ATTR_REG_HINT_ALPHA2, %HWSIM_ATTR_REG_CUSTOM_REG,
+ *	%HWSIM_ATTR_REG_RULES, %HWSIM_ATTR_REG_DFS_REGION,
  *	%HWSIM_ATTR_PERM_ADDR
  * @HWSIM_CMD_DEL_RADIO: destroy a radio, reply is multicasted
  * @HWSIM_CMD_GET_RADIO: fetch information about existing radios, uses:
@@ -164,6 +165,14 @@ enum hwsim_commands {
  * @HWSIM_ATTR_SUPPORT_BACKGROUND_RADAR: background radar/CAC support (flag)
  * @HWSIM_ATTR_NO_MONITOR: skip monitor report for this TX status, e.g. in case
  *	the frame was never reported to any receiver (flag)
+ * @HWSIM_ATTR_REG_RULES: nested attribute used with %HWSIM_CMD_NEW_RADIO to
+ *	give the radio the custom regdomain specified by the nested attributes,
+ *	see &enum hwsim_reg_rule_attrs.
+ *	Not compatible with %HWSIM_ATTR_REG_CUSTOM_REG,
+ *	%HWSIM_ATTR_REG_HINT_ALPHA2 or %HWSIM_ATTR_REG_STRICT_REG.
+ * @HWSIM_ATTR_REG_DFS_REGION: u32 (&enum nl80211_dfs_regions) DFS region for
+ *	the domain given in %HWSIM_ATTR_REG_RULES (only valid with it),
+ *	defaults to %NL80211_DFS_UNSET.
  * @__HWSIM_ATTR_MAX: enum limit
  */
 enum hwsim_attrs {
@@ -200,9 +209,44 @@ enum hwsim_attrs {
 	HWSIM_ATTR_SUPPORT_NAN_DEVICE,
 	HWSIM_ATTR_SUPPORT_BACKGROUND_RADAR,
 	HWSIM_ATTR_NO_MONITOR,
+	HWSIM_ATTR_REG_RULES,
+	HWSIM_ATTR_REG_DFS_REGION,
 	__HWSIM_ATTR_MAX,
 };
 #define HWSIM_ATTR_MAX (__HWSIM_ATTR_MAX - 1)
+
+/**
+ * enum hwsim_reg_rule_attrs - regulatory rule attributes
+ *
+ * Nested inside each entry of %HWSIM_ATTR_REG_RULES. The values mirror
+ * &struct ieee80211_reg_rule; see &enum nl80211_reg_rule_attr for the
+ * equivalent nl80211 attributes. Only the frequency range and bandwidth
+ * are mandatory.
+ *
+ * @__HWSIM_REG_RULE_ATTR_INVALID: invalid attribute to catch errors
+ * @HWSIM_REG_RULE_ATTR_START_KHZ: u32, start of the frequency range (kHz)
+ * @HWSIM_REG_RULE_ATTR_END_KHZ: u32, end of the frequency range (kHz)
+ * @HWSIM_REG_RULE_ATTR_MAX_BW_KHZ: u32, maximum bandwidth (kHz)
+ * @HWSIM_REG_RULE_ATTR_MAX_ANT_GAIN_MBI: u32, maximum antenna gain (mBi),
+ *	defaults to 0
+ * @HWSIM_REG_RULE_ATTR_MAX_EIRP_MBM: u32, maximum EIRP (mBm), defaults to
+ *	20 dBm
+ * @HWSIM_REG_RULE_ATTR_FLAGS: u32, rule flags (&enum nl80211_reg_rule_flags)
+ * @HWSIM_REG_RULE_ATTR_DFS_CAC_MS: u32, DFS CAC time (ms), 0 for the default
+ * @__HWSIM_REG_RULE_ATTR_MAX: enum limit
+ */
+enum hwsim_reg_rule_attrs {
+	__HWSIM_REG_RULE_ATTR_INVALID,
+	HWSIM_REG_RULE_ATTR_START_KHZ,
+	HWSIM_REG_RULE_ATTR_END_KHZ,
+	HWSIM_REG_RULE_ATTR_MAX_BW_KHZ,
+	HWSIM_REG_RULE_ATTR_MAX_ANT_GAIN_MBI,
+	HWSIM_REG_RULE_ATTR_MAX_EIRP_MBM,
+	HWSIM_REG_RULE_ATTR_FLAGS,
+	HWSIM_REG_RULE_ATTR_DFS_CAC_MS,
+	__HWSIM_REG_RULE_ATTR_MAX,
+};
+#define HWSIM_REG_RULE_ATTR_MAX (__HWSIM_REG_RULE_ATTR_MAX - 1)
 
 /**
  * struct hwsim_tx_rate - rate selection/status
