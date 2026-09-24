@@ -1445,16 +1445,12 @@ int iwl_mei_pldr_req(void)
 		if (ret)
 			return ret;
 
-		ret = wait_event_timeout(mei->pldr_wq, mei->pldr_active, HZ / 2);
-		if (ret)
-			break;
+		if (wait_event_timeout(mei->pldr_wq, mei->pldr_active, HZ / 2))
+			return 0;
 
 		/* Take the mutex for the next iteration */
 		mutex_lock(&iwl_mei_mutex);
 	}
-
-	if (ret)
-		return 0;
 
 	ret = -ETIMEDOUT;
 out:

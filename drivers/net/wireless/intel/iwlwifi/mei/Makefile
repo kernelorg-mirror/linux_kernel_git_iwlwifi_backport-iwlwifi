@@ -10,3 +10,5 @@ ccflags-y += -I $(src)/../
 ifeq ($(CPTCFG_IWLWIFI_SIMULATION),y)
 UBSAN_SANITIZE := y
 endif
+
+CONTEXT_ANALYSIS := y
