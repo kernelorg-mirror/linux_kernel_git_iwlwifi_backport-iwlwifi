@@ -215,6 +215,7 @@ static void iwlmld_kunit_add_link_sta(struct ieee80211_sta *sta,
 	rcu_assign_pointer(sta->link[link_id], link_sta);
 
 	link_sta->sta = sta;
+	link_sta->link_conf = rcu_access_pointer(mld_sta->vif->link_conf[link_id]);
 
 	/* and the iwl_mld_link_sta */
 	ret = iwl_mld_allocate_link_sta_fw_id(mld, &fw_id, link_sta);
