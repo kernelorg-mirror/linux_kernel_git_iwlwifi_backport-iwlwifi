@@ -6175,6 +6175,8 @@ static int mac80211_hwsim_new_radio(struct genl_info *info,
 	hw->max_rates = 4;
 	hw->max_rate_tries = 11;
 
+	hw->max_tx_aggregation_subframes = IEEE80211_MAX_AMPDU_BUF_EHT;
+
 	hw->wiphy->vendor_commands = mac80211_hwsim_vendor_commands;
 	hw->wiphy->n_vendor_commands =
 		ARRAY_SIZE(mac80211_hwsim_vendor_commands);
