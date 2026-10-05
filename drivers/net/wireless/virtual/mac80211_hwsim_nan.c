@@ -749,7 +749,6 @@ mac80211_hwsim_nan_tx_beacon(struct mac80211_hwsim_data *data,
 	struct ieee80211_nan_attr nan_attr;
 	struct ieee80211_mgmt *mgmt;
 	struct sk_buff *skb;
-	u16 beacon_int;
 
 	/*
 	 * TODO: Should the configured vendor elements be included in some of
@@ -767,15 +766,11 @@ mac80211_hwsim_nan_tx_beacon(struct mac80211_hwsim_data *data,
 	spin_lock(&data->nan.state_lock);
 
 	/*
-	 * The attributes configured by user space, e.g. the Service ID List
-	 * and Subscribe Service ID List attributes (needed for Instant
-	 * Communication), are appended to the mandatory ones.
+	 * The attributes configured by user space are appended to the
+	 * mandatory ones.
 	 */
 	if (is_discovery)
 		nan_ie.len += data->nan.extra_nan_attrs_len;
-
-	beacon_int = is_discovery ? data->nan.discovery_beacon_interval :
-		DWST_TU;
 
 	skb_reserve(skb, IEEE80211_TX_STATUS_HEADROOM);
 	mgmt = skb_put(skb, offsetofend(struct ieee80211_mgmt, u.beacon));
@@ -787,7 +782,9 @@ mac80211_hwsim_nan_tx_beacon(struct mac80211_hwsim_data *data,
 
 	mgmt->frame_control = cpu_to_le16(IEEE80211_FTYPE_MGMT |
 					  IEEE80211_STYPE_BEACON);
-	mgmt->u.beacon.beacon_int = cpu_to_le16(beacon_int);
+	mgmt->u.beacon.beacon_int =
+		cpu_to_le16(is_discovery ? data->nan.discovery_beacon_interval :
+			    DWST_TU);
 	mgmt->u.beacon.capab_info =
 		cpu_to_le16(WLAN_CAPABILITY_SHORT_SLOT_TIME |
 			    WLAN_CAPABILITY_SHORT_PREAMBLE);
@@ -926,7 +923,6 @@ mac80211_hwsim_nan_discovery_beacon_timer(struct hrtimer *timer)
 	struct mac80211_hwsim_data *data =
 		container_of(timer, struct mac80211_hwsim_data,
 			     nan.discovery_beacon_timer);
-	u16 beacon_int;
 	u32 remainder;
 	u64 tsf_now;
 	u64 tbtt;
@@ -948,8 +944,6 @@ mac80211_hwsim_nan_discovery_beacon_timer(struct hrtimer *timer)
 			return HRTIMER_NORESTART;
 	}
 
-	beacon_int = data->nan.discovery_beacon_interval;
-
 	mac80211_hwsim_nan_tx_beacon(
 		data, true, ieee80211_get_channel(data->hw->wiphy, 2437));
 
@@ -962,10 +956,11 @@ mac80211_hwsim_nan_discovery_beacon_timer(struct hrtimer *timer)
 	tsf_now = mac80211_hwsim_get_tsf(data->hw, data->nan.device_vif);
 
 	/* Wrap value to be after the next TBTT */
-	tbtt = tsf_now + ieee80211_tu_to_usec(beacon_int);
+	tbtt = tsf_now + ieee80211_tu_to_usec(data->nan.discovery_beacon_interval);
 
 	/* Round TBTT down to the correct time */
-	div_u64_rem(tbtt, ieee80211_tu_to_usec(beacon_int), &remainder);
+	div_u64_rem(tbtt, ieee80211_tu_to_usec(data->nan.discovery_beacon_interval),
+		    &remainder);
 	tbtt = tbtt - remainder;
 
 	hrtimer_set_expires(&data->nan.discovery_beacon_timer,
