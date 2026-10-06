@@ -591,6 +591,11 @@ int iwl_mld_add_modify_sta_cmd(struct iwl_mld *mld,
 			cmd.ack_enabled = cpu_to_le32(1);
 	}
 
+	if (link_sta->uhr_cap.has_uhr &&
+	    le32_get_bits(link_sta->uhr_cap.phy.cap,
+			  IEEE80211_UHR_PHY_CAP_2XLDPC_RX))
+		cmd.use_ldpc_x2_cw = 1;
+
 	if (mld_sta->sta_type == STATION_TYPE_NAN_PEER_NDI) {
 		struct ieee80211_sta *nmi_sta =
 			wiphy_dereference(mld->wiphy, sta->nmi);
