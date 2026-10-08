@@ -480,8 +480,6 @@ iwl_op_mode_mld_start(struct iwl_trans *trans, const struct iwl_rf_cfg *cfg,
 
 	iwl_mld_tx_gp2_init(mld);
 
-	/* needed for regulatory init */
-	rtnl_lock();
 	/* Needed for sending commands */
 	wiphy_lock(mld->wiphy);
 
@@ -503,7 +501,6 @@ iwl_op_mode_mld_start(struct iwl_trans *trans, const struct iwl_rf_cfg *cfg,
 		/* wiphy memory is about to be freed, we should cancel any pending work */
 		wiphy_work_cancel(mld->wiphy, &mld->async_handlers_wk);
 		wiphy_unlock(mld->wiphy);
-		rtnl_unlock();
 		goto err;
 	}
 
@@ -515,7 +512,6 @@ iwl_op_mode_mld_start(struct iwl_trans *trans, const struct iwl_rf_cfg *cfg,
 	iwl_mld_stop_fw(mld);
 
 	wiphy_unlock(mld->wiphy);
-	rtnl_unlock();
 
 	ret = iwl_mld_leds_init(mld);
 	if (ret)
