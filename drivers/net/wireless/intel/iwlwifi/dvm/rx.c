@@ -997,6 +997,12 @@ void iwl_rx_dispatch(struct iwl_op_mode *op_mode, struct napi_struct *napi,
 	struct iwl_rx_packet *pkt = rxb_addr(rxb);
 	struct iwl_priv *priv = IWL_OP_MODE_GET_DVM(op_mode);
 
+	if (unlikely(rxb_is_split(rxb))) {
+		IWL_ERR(priv, "dropping split RX command 0x%04x\n",
+			WIDE_ID(pkt->hdr.group_id, pkt->hdr.cmd));
+		return;
+	}
+
 	/*
 	 * Do the notification wait before RX handlers so
 	 * even if the RX handler consumes the RXB we have
