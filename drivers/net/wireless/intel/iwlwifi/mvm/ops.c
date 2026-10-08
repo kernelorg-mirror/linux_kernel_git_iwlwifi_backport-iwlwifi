@@ -921,7 +921,6 @@ static int iwl_mvm_start_get_nvm(struct iwl_mvm *mvm)
 	}
 
 get_nvm_from_fw:
-	rtnl_lock();
 	wiphy_lock(mvm->hw->wiphy);
 	mutex_lock(&mvm->mutex);
 
@@ -929,7 +928,6 @@ get_nvm_from_fw:
 	if (ret) {
 		mutex_unlock(&mvm->mutex);
 		wiphy_unlock(mvm->hw->wiphy);
-		rtnl_unlock();
 		return ret;
 	}
 
@@ -945,7 +943,6 @@ get_nvm_from_fw:
 
 	mutex_unlock(&mvm->mutex);
 	wiphy_unlock(mvm->hw->wiphy);
-	rtnl_unlock();
 
 	if (ret)
 		IWL_ERR(mvm, "Failed to run INIT ucode: %d\n", ret);
