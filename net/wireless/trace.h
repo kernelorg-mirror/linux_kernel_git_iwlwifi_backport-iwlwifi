@@ -744,7 +744,7 @@ TRACE_EVENT(rdev_start_ap,
 		  __entry->inactivity_timeout, __entry->link_id)
 );
 
-TRACE_EVENT(rdev_change_beacon,
+DECLARE_EVENT_CLASS(rdev_ap_update,
 	TP_PROTO(struct wiphy *wiphy, struct net_device *netdev,
 		 struct cfg80211_ap_update *info),
 	TP_ARGS(wiphy, netdev, info),
@@ -790,6 +790,18 @@ TRACE_EVENT(rdev_change_beacon,
 	),
 	TP_printk(WIPHY_PR_FMT ", " NETDEV_PR_FMT ", link_id:%d",
 		  WIPHY_PR_ARG, NETDEV_PR_ARG, __entry->link_id)
+);
+
+DEFINE_EVENT(rdev_ap_update, rdev_change_beacon,
+	TP_PROTO(struct wiphy *wiphy, struct net_device *netdev,
+		 struct cfg80211_ap_update *info),
+	TP_ARGS(wiphy, netdev, info)
+);
+
+DEFINE_EVENT(rdev_ap_update, rdev_update_beacon,
+	TP_PROTO(struct wiphy *wiphy, struct net_device *netdev,
+		 struct cfg80211_ap_update *info),
+	TP_ARGS(wiphy, netdev, info)
 );
 
 TRACE_EVENT(rdev_stop_ap,
