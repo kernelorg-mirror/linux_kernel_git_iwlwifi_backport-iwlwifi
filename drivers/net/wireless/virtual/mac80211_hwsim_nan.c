@@ -300,7 +300,13 @@ void mac80211_hwsim_nan_rx(struct ieee80211_hw *hw,
 		slot = hwsim_nan_slot_from_tsf(rx_status.mactime);
 	}
 
-	/* (overly) simplify things, only track 2.4 GHz here */
+	/*
+	 * Only sync on 2.4 GHz, which all NAN devices attend. The slot number
+	 * is derived from the local TSF, so before being synchronized a 5 GHz
+	 * beacon from a different device may fall into the local 2.4 GHz DW
+	 * slot. Filter by frequency to keep such beacons out of master
+	 * selection and synchronization.
+	 */
 	if (rx_status.freq != 2437)
 		return;
 

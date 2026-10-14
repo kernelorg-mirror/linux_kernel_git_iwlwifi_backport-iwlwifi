@@ -56,7 +56,6 @@ struct mac80211_hwsim_nan_data {
 	bool tsf_adjusted;
 	bool tsf_discontinuity;
 
-	/* Wi-Fi Aware version 4.0, Section 13 */
 	bool instant_comm;
 	u8 discovery_beacon_interval;
 
