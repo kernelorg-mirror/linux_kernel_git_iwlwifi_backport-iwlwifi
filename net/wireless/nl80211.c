@@ -20282,6 +20282,7 @@ static int nl80211_pre_doit(
 			wdev = nl80211_lock_and_recheck(rdev, netns, wdev_id);
 			if (IS_ERR(wdev)) {
 				err = PTR_ERR(wdev);
+				wdev = NULL;
 				goto out;
 			}
 		}
