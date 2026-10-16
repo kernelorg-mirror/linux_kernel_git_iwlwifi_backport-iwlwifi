@@ -1146,6 +1146,17 @@ static int hwsim_write_simulate_radar(void *dat, u64 val)
 DEFINE_DEBUGFS_ATTRIBUTE(hwsim_simulate_radar, NULL,
 			 hwsim_write_simulate_radar, "%llu\n");
 
+static int hwsim_write_restart(void *dat, u64 val)
+{
+	struct mac80211_hwsim_data *data = dat;
+
+	ieee80211_restart_hw(data->hw);
+
+	return 0;
+}
+
+DEFINE_DEBUGFS_ATTRIBUTE(hwsim_restart, NULL, hwsim_write_restart, "%llu\n");
+
 static ssize_t hwsim_background_cac_write(struct file *file,
 					  const char __user *user_buf,
 					  size_t count, loff_t *ppos)
@@ -6245,6 +6256,8 @@ static int mac80211_hwsim_new_radio(struct genl_info *info,
 	debugfs_create_file("simulate_incumbent_signal_interference", 0200,
 			    data->debugfs,
 			    data, &hwsim_simulate_incumbent_signal_fops);
+	debugfs_create_file("restart", 0200, data->debugfs, data,
+			    &hwsim_restart);
 
 	if (param->pmsr_capa) {
 		data->pmsr_capa = *param->pmsr_capa;
