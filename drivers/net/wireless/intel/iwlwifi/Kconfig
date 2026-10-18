@@ -64,6 +64,9 @@ config IWLWIFI_LEDS
 	depends on LEDS_CLASS=y || LEDS_CLASS=MAC80211
 	depends on IWLMVM || IWLDVM
 	depends on LEDS_TRIGGERS
+	# before commit 2a5a8fa8b231 ("leds: trigger: use RCU to protect the led_cdevs list"),
+	# ->brightness_set() may be called with IRQs disabled
+	depends on !KERNEL_5_16
 	select MAC80211_LEDS
 	default y
 
