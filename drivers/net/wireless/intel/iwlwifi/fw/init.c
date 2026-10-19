@@ -7,6 +7,9 @@
 #include "runtime.h"
 #include "dbg.h"
 #include "debugfs.h"
+#ifdef CPTCFG_IWLWIFI_DT
+#include "dt.h"
+#endif
 
 #include "fw/api/system.h"
 #include "fw/api/commands.h"
@@ -36,6 +39,9 @@ void iwl_fw_runtime_init(struct iwl_fw_runtime *fwrt, struct iwl_trans *trans,
 		INIT_DELAYED_WORK(&fwrt->dump.wks[i].wk, iwl_fw_error_dump_wk);
 	}
 	iwl_fwrt_dbgfs_register(fwrt, dbgfs_dir);
+#ifdef CPTCFG_IWLWIFI_DT
+	iwl_dt_init(fwrt);
+#endif
 }
 IWL_EXPORT_SYMBOL(iwl_fw_runtime_init);
 
