@@ -8,7 +8,23 @@
 #include "regulatory.h"
 #include "fw/runtime.h"
 #include "fw/uefi.h"
+#ifdef CPTCFG_IWLWIFI_DT
+#include "fw/dt.h"
+#endif
 
+#ifdef CPTCFG_IWLWIFI_DT
+#define GET_BIOS_TABLE(__name, ...)					\
+do {									\
+	int ret = -ENOENT;						\
+	if (fwrt->uefi_tables_lock_status > UEFI_WIFI_GUID_UNLOCKED)	\
+		ret = iwl_uefi_get_ ## __name(__VA_ARGS__);		\
+	if (ret < 0)							\
+		ret = iwl_acpi_get_ ## __name(__VA_ARGS__);		\
+	if (ret < 0 && fwrt->dt_compatible)				\
+		ret = iwl_dt_get_ ## __name(__VA_ARGS__);		\
+	return ret;							\
+} while (0)
+#else
 #define GET_BIOS_TABLE(__name, ...)					\
 do {									\
 	int ret = -ENOENT;						\
@@ -18,6 +34,7 @@ do {									\
 		ret = iwl_acpi_get_ ## __name(__VA_ARGS__);		\
 	return ret;							\
 } while (0)
+#endif /* CPTCFG_IWLWIFI_DT */
 
 #define IWL_BIOS_TABLE_LOADER(__name)					\
 int iwl_bios_get_ ## __name(struct iwl_fw_runtime *fwrt)		\

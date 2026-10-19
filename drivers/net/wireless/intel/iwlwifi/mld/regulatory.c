@@ -8,6 +8,9 @@
 #include "fw/regulatory.h"
 #include "fw/acpi.h"
 #include "fw/uefi.h"
+#ifdef CPTCFG_IWLWIFI_DT
+#include "fw/dt.h"
+#endif
 
 #include "regulatory.h"
 #include "mld.h"
@@ -84,12 +87,23 @@ void iwl_mld_get_bios_tables(struct iwl_mld *mld)
 	}
 
 	iwl_uefi_get_uats_table(mld->trans, &mld->fwrt);
+#ifdef CPTCFG_IWLWIFI_DT
+	if (!mld->fwrt.ap_type_cmd_valid && mld->fwrt.dt_compatible)
+		iwl_dt_get_uats_table(&mld->fwrt);
+#endif
 	iwl_uefi_get_uneb_table(mld->trans, &mld->fwrt);
 
 	iwl_bios_get_phy_filters(&mld->fwrt);
 
 	iwl_uefi_get_sgom_table(mld->trans, &mld->fwrt);
+#ifdef CPTCFG_IWLWIFI_DT
+	ret = iwl_uefi_get_puncturing(&mld->fwrt);
+
+	if (ret < 0 && mld->fwrt.dt_compatible)
+		iwl_dt_get_puncturing(&mld->fwrt);
+#else
 	iwl_uefi_get_puncturing(&mld->fwrt);
+#endif
 
 	mld->rfi.bios_enabled = iwl_rfi_is_enabled_in_bios(&mld->fwrt);
 }

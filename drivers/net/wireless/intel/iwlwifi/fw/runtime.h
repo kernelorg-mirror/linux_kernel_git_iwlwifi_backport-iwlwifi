@@ -223,6 +223,9 @@ struct iwl_fw_runtime {
 	bool sgom_enabled;
 	struct iwl_mcc_allowed_ap_type_cmd ap_type_cmd;
 	bool ap_type_cmd_valid;
+#ifdef CPTCFG_IWLWIFI_DT
+	bool dt_compatible;
+#endif
 	u8 uefi_tables_lock_status;
 	struct iwl_phy_specific_cfg phy_filters;
 	enum bios_source dsm_source;

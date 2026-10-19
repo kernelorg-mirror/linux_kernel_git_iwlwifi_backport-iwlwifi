@@ -12,6 +12,9 @@
 #include "fw/api/coex.h"
 #include "fw/dbg.h"
 #include "fw/uefi.h"
+#ifdef CPTCFG_IWLWIFI_DT
+#include "fw/dt.h"
+#endif
 
 #include "mld.h"
 #include "mlo.h"

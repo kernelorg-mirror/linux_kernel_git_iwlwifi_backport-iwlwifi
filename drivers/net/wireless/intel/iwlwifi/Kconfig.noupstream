@@ -1,3 +1,17 @@
+config IWLWIFI_DT
+	bool "Enable Device Tree BIOS configuration support"
+	depends on IWLWIFI
+	depends on OF
+	help
+	  Enable support for reading regulatory and power configuration
+	  from Device Tree properties on platforms that do not provide
+	  UEFI variables or ACPI methods (e.g. embedded platforms with
+	  Intel Wi-Fi 7 BE200 PCIe adapters).
+
+	  DT is used as the lowest-priority source, after UEFI and ACPI.
+
+	  If unsure, say N.
+
 config IWLXVT
 	tristate "Enable XVT op_mode"
 	depends on IWLWIFI
