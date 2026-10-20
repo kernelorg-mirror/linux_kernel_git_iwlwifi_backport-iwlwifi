@@ -1735,6 +1735,32 @@ static bool cfg80211_ir_permissive_chan(struct wiphy *wiphy,
 	return false;
 }
 
+/* check every chandef channel for relaxation */
+static bool cfg80211_ir_permissive_chandef(struct wiphy *wiphy,
+					   enum nl80211_iftype iftype,
+					   const struct cfg80211_chan_def *chandef,
+					   u32 permitting_flags)
+{
+	struct ieee80211_channel *c;
+
+	if (cfg80211_chandef_is_s1g(chandef))
+		return cfg80211_ir_permissive_chan(wiphy, iftype,
+						   chandef->chan);
+
+	for_each_subchan(chandef, freq, cf) {
+		c = ieee80211_get_channel_khz(wiphy, freq);
+		if (!c)
+			return false;
+		if (!(c->flags & IEEE80211_CHAN_NO_IR) ||
+		    c->flags & permitting_flags)
+			continue;
+		if (!cfg80211_ir_permissive_chan(wiphy, iftype, c))
+			return false;
+	}
+
+	return true;
+}
+
 static bool _cfg80211_reg_can_beacon(struct wiphy *wiphy,
 				     struct cfg80211_chan_def *chandef,
 				     enum nl80211_iftype iftype,
@@ -1783,18 +1809,6 @@ bool cfg80211_reg_check_beaconing(struct wiphy *wiphy,
 	u32 permitting_flags = 0;
 	bool check_no_ir = true;
 
-	/*
-	 * Under certain conditions suggested by some regulatory bodies a
-	 * GO/STA can IR on channels marked with IEEE80211_NO_IR. Set this flag
-	 * only if such relaxations are not enabled and the conditions are not
-	 * met.
-	 */
-	if (cfg->relax) {
-		lockdep_assert_held(&rdev->wiphy.mtx);
-		check_no_ir = !cfg80211_ir_permissive_chan(wiphy, cfg->iftype,
-							   chandef->chan);
-	}
-
 	if (cfg->reg_power == IEEE80211_REG_VLP_AP)
 		permitting_flags |= IEEE80211_CHAN_ALLOW_6GHZ_VLP_AP;
 
@@ -1803,6 +1817,20 @@ bool cfg80211_reg_check_beaconing(struct wiphy *wiphy,
 	    (chandef->width == NL80211_CHAN_WIDTH_20_NOHT ||
 	     chandef->width == NL80211_CHAN_WIDTH_20))
 		permitting_flags |= IEEE80211_CHAN_ALLOW_20MHZ_ACTIVITY;
+
+	/*
+	 * Under certain conditions suggested by some regulatory bodies a
+	 * GO/STA can IR on channels marked with IEEE80211_NO_IR. Set this flag
+	 * only if such relaxations are not enabled and the conditions are not
+	 * met for all the subchannels.
+	 */
+	if (cfg->relax) {
+		lockdep_assert_held(&rdev->wiphy.mtx);
+		check_no_ir = !cfg80211_ir_permissive_chandef(wiphy,
+							      cfg->iftype,
+							      chandef,
+							      permitting_flags);
+	}
 
 	return _cfg80211_reg_can_beacon(wiphy, chandef, cfg->iftype,
 					check_no_ir ? IEEE80211_CHAN_NO_IR : 0,
