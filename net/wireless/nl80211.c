@@ -7694,10 +7694,12 @@ static int nl80211_start_ap(struct sk_buff *skb, struct genl_info *info)
 
 	/* FIXME: validate MLO/link-id against driver capabilities */
 
+	/* driver might need this */
+	wdev->links[link_id].ap.reg_power = beacon_check.reg_power;
+
 	err = rdev_start_ap(rdev, dev, params);
 	if (!err) {
 		wdev->links[link_id].ap.beacon_interval = params->beacon_interval;
-		wdev->links[link_id].ap.reg_power = beacon_check.reg_power;
 		wdev->links[link_id].ap.chandef = params->chandef;
 		wdev->u.ap.ssid_len = params->ssid_len;
 		memcpy(wdev->u.ap.ssid, params->ssid,
@@ -7707,6 +7709,8 @@ static int nl80211_start_ap(struct sk_buff *skb, struct genl_info *info)
 			wdev->conn_owner_nlportid = info->snd_portid;
 
 		nl80211_send_ap_started(wdev, link_id);
+	} else {
+		wdev->links[link_id].ap.reg_power = IEEE80211_REG_UNSET_AP;
 	}
 out:
 	kfree(params->acl);
